@@ -6,4 +6,4 @@
   tasks:
     - name: Stop ssh server
       shell: lxc-attach -n {{vault_nodes[item].ansible_fqdn}} -- systemctl stop ssh
-      with_items: "{{ groups['nodes'] }}"
+      with_items: "{{ groups['nodes'] | union(groups['monitoring'])}}"

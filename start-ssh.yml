@@ -6,4 +6,4 @@
   tasks:
     - name: Start ssh server
       shell: lxc-attach -n {{vault_nodes[item].ansible_fqdn}} -- systemctl start ssh
-      with_items: "{{ groups['nodes'] }}"
+      with_items: "{{ groups['nodes'] | union(groups['monitoring'])}}"
