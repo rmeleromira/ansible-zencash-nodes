@@ -8,7 +8,7 @@
   - master
   vars:
     ipv6_subnet: "{{vault_ipv6_subnet}}"
-    ipv6_bridge_address: "{{ipv6_subnet}}:c:c:c:1"
+    ipv6_bridge_address: "{{ipv6_subnet}}1"
     ipv6_interface: "{{vault_ipv6_interface}}"
     blocks_directory: "{{vault_blocks_directory}}"
     ssh_public_key: "{{vault_ssh_public_key}}"
@@ -20,7 +20,7 @@
   - nodes
   vars:
     ipv6_subnet: "{{vault_ipv6_subnet}}"
-    ipv6_bridge_address: "{{ipv6_subnet}}:c:c:c:1"
+    ipv6_bridge_address: "{{ipv6_subnet}}1"
 - hosts: monitoring
   tags: monitoring
   vars_files:
