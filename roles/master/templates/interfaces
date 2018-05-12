@@ -1,0 +1,9 @@
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+iface eth0 inet6 static
+  address {{hostvars[item].ipv6_address}}
+  netmask 112
+  gateway {{ipv6_bridge_address}}

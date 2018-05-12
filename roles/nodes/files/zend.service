@@ -1,0 +1,16 @@
+[Unit]
+Description=ZenCash Secure Node Server
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/zend -printtoconsole -logtimestamps=0
+ExecStop=/usr/bin/zen-cli stop
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+User=zend
+Group=zend
+Nice=-20
+
+[Install]
+WantedBy=multi-user.target

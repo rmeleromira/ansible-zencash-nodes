@@ -1,0 +1,186 @@
+---
+# - sysctl:
+#     name: net.ipv6.conf.all.forwarding
+#     value: 1
+#     state: present
+# - sysctl:
+#     name: net.ipv6.conf.all.proxy_ndp
+#     value: 1
+#     state: present
+# - sysctl:
+#     name: net.ipv6.conf.default.forwarding
+#     value: 1
+#     state: present
+# - sysctl:
+#     name: net.ipv6.conf.default.proxy_ndp
+#     value: 1
+#     state: present
+# - apt:
+#     name: lxc,ufw,fail2ban
+#     state: present
+#     update_cache: yes
+# - copy:
+#     name: Copy lxcbr0 service to enable ipv6 arp proxying
+#     src: lxcbr0.service
+#     dest: /etc/systemd/system/lxcbr0.service
+# - systemd:
+#     name: lxcbr0
+#     state: started
+#     enabled: yes
+#     daemon_reload: yes
+# - systemd:
+#     name: fail2ban
+#     state: started
+#     enabled: yes
+# - template:
+#     name: Template
+#     src: add-ndp-proxy.sh
+#     dest: /etc/add-ndp-proxy.sh
+#     mode: o+x
+# - lineinfile:
+#     path: /etc/default/ufw
+#     regexp: '^DEFAULT_FORWARD_POLICY='
+#     line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+# - name: Allow all access to port 22
+#   ufw:
+#     rule: allow
+#     port: 22
+
+# ufw allow from nodes lxc network
+
+# - name: Set logging
+#   ufw:
+#     logging: on
+# - name: Allow everything and enable UFW
+#   ufw:
+#     state: enabled
+#- debug: var="vault_nodes[item].ansible_fqdn"
+#  with_items: "{{ groups['nodes'] }}"
+#  tags: test
+
+- name: Check if containers are configured
+  stat:
+      path: /var/lib/lxc/{{vault_nodes[item].ansible_fqdn}}/.configured
+  with_items: "{{ groups['nodes'] }}"
+  register: containers_configured
+
+- name: Create secure node containers
+  lxc_container:
+    name: "{{vault_nodes[item.item].ansible_fqdn}}"
+    container_log: true
+    template: ubuntu
+    state: started
+    template_options: --release xenial
+    container_command: |
+      cat <<EOF > /etc/network/interfaces
+      auto lo
+      iface lo inet loopback
+
+      auto eth0
+      iface eth0 inet dhcp
+      iface eth0 inet6 static
+        address {{vault_nodes[item.item].ansible_host}}
+        netmask 112
+        gateway {{ipv6_bridge_address}}
+      EOF
+      ifdown eth0
+      ifup eth0
+      sleep 1
+      apt-get update
+      apt-get -y install openssh-server python
+      mkdir /root/.ssh
+      echo '{{ssh_public_key}}' > /root/.ssh/authorized_keys
+  loop: "{{containers_configured.results}}"
+  when: item.stat.exists == False
+
+- name: Create secure nodes configuration check file
+  file:
+    state: touch
+    path: /var/lib/lxc/{{vault_nodes[item.item].ansible_fqdn}}/.configured
+  loop: "{{containers_configured.results}}"
+  when: item.stat.exists == False
+#
+# - name: Check if monitoring container is configured
+#   stat:
+#       path: /var/lib/lxc/{{item}}/.configured
+#   with_items: "{{ groups['monitoring'] }}"
+#   register: containers_configured
+#
+# - name: Create monitoring container
+#   lxc_container:
+#     name: "{{item.item}}"
+#     container_log: true
+#     template: ubuntu
+#     state: started
+#     template_options: --release xenial
+#     container_command: |
+#       cat <<EOF > /etc/network/interfaces
+#       auto lo
+#       iface lo inet loopback
+#
+#       auto eth0
+#       iface eth0 inet dhcp
+#       iface eth0 inet6 static
+#         address {{hostvars[item.item].ansible_host}}
+#         netmask 112
+#         gateway {{ipv6_bridge_address}}
+#       EOF
+#       ifdown eth0
+#       ifup eth0
+#       sleep 1
+#       apt-get update
+#       apt-get -y install openssh-server
+#       mkdir /root/.ssh
+#       echo '{{ssh_public_key}}' > /root/.ssh/authorized_keys
+#   loop: "{{containers_configured.results}}"
+#   when: item.stat.exists == False
+#
+# - name: Create configuration check file
+#   file:
+#     state: touch
+#     path: /var/lib/lxc/{{item.item}}/.configured
+#   loop: "{{containers_configured.results}}"
+#   when: item.stat.exists == False
+#
+#
+- name: Configure autostart for containers
+  lineinfile:
+    path: "/var/lib/lxc/{{vault_nodes[item].ansible_fqdn}}/config"
+    regexp: '^lxc.start.auto ='
+    line: 'lxc.start.auto = 1'
+  with_items: "{{ groups['nodes'] }}"
+
+- name: Configure static address for monitoring
+  lineinfile:
+    line: dhcp-host=mon,10.0.3.100
+    path: /etc/lxc/dnsmasq.conf
+    create: yes
+  register: dhcp_added
+
+- name: Enable static lxc addresses
+  lineinfile:
+    path: /etc/default/lxc-net
+    line: 'LXC_DHCP_CONFILE=/etc/lxc/dnsmasq.conf'
+  register: lxc_net
+
+- name: Restart lxc-net
+  systemd:
+    name: lxc-net
+    state: restarted
+  when: lxc_net.changed or dhcp_added.changed
+
+- name: Create zen folder
+  file:
+    path: /var/lib/lxc/{{vault_nodes[item.item].ansible_fqdn}}/rootfs/home/zend/.zen/
+    state: directory
+  loop: "{{containers_configured.results}}"
+  when: item.stat.exists == False
+
+- name: Copy blockchain blocks
+  shell: cp -r * /var/lib/lxc/{{vault_nodes[item.item].ansible_fqdn}}/rootfs/home/zend/.zen
+  args:
+    chdir: "{{blocks_directory}}"
+  loop: "{{containers_configured.results}}"
+  when: item.stat.exists == False and blocks_directory is defined
+
+# configure forwarding for monitoring over ipv4
