@@ -4,6 +4,14 @@
     - secrets.yml
   gather_facts: false
   tasks:
-    - name: Start ssh server
+    - name: Start secure node ssh servers
       shell: lxc-attach -n {{vault_nodes[item].ansible_fqdn}} -- systemctl start ssh
-      with_items: "{{ groups['nodes'] | union(groups['monitoring'])}}"
+      with_items: "{{ groups['nodes'] }}"
+      when: groups['nodes'] is defined
+    - name: Start super node ssh servers
+      shell: lxc-attach -n {{vault_nodes[item].ansible_fqdn}} -- systemctl start ssh
+      with_items: "{{ groups['supernodes'] }}"
+      when: groups['supernodes'] is defined
+    - name: Start monitoring node ssh server
+      shell: lxc-attach -n {{vault_monitoring.ansible_fqdn}} -- systemctl start ssh
+      when: groups['monitoring'] is defined

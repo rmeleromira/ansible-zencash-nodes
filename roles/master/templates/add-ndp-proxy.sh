@@ -6,4 +6,4 @@ do
   ip neigh add proxy {{ipv6_subnet}}$i dev {{ipv6_interface}}
 done
 
-ip addr add {{ipv6ipv6_bridge_address}}/112 dev lxcbr0
+ip addr add {{ipv6_bridge_address}}/112 dev lxcbr0

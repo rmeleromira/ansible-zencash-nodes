@@ -265,21 +265,9 @@
     - { name: "rpcpassword",value: "{{password}}"}
     - { name: "rpcport",value: "18231"}
     - { name: "rpcuser",value: "{{username}}"}
+    - { name: "servers",value: "ts2.eu,ts1.eu,ts3.eu,ts4.eu,ts4.na,ts3.na,ts2.na,ts1.na"}
     - { name: "stakeaddr",value: "{{stake_address}}"}
   register: template_settings
-
-- name: Check for servers config
-  stat:
-    path: /home/zend/secnodetracker/config/servers
-  register: servers_config_exists
-
-- name: Template servers config
-  copy:
-    content: "ts2.eu,ts1.eu,ts3.eu,ts4.eu,ts4.na,ts3.na,ts2.na,ts1.na"
-    dest: "/home/zend/secnodetracker/config/servers"
-    owner: zend
-    group: zend
-  when: servers_config_exists.stat.exists == False
 
 - name: Start and enable secnodetracker
   systemd:

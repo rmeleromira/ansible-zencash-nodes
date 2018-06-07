@@ -12,6 +12,15 @@
     ipv6_interface: "{{vault_ipv6_interface}}"
     blocks_directory: "{{vault_blocks_directory}}"
     ssh_public_key: "{{vault_ssh_public_key}}"
+#- hosts: supernodes
+#  vars_files:
+#    - secrets.yml
+#  tags: nodes
+#  roles:
+#  - nodes
+#  vars:
+#    ipv6_subnet: "{{vault_ipv6_subnet}}"
+#    ipv6_bridge_address: "{{ipv6_subnet}}1"
 - hosts: nodes
   vars_files:
     - secrets.yml

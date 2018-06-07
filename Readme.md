@@ -13,7 +13,7 @@ Since this uses ansible, install it
 
 ```
 apt-get update
-apt-get install python3-pip libssl-dev git -y
+apt-get install python3-pip python-lxc libssl-dev git -y
 pip3 install ansible
 pip3 install -U cryptography
 ```
@@ -60,6 +60,10 @@ blocks  chainstate
 
 # Upcoming features
 
+## Read logs through journal
+
+Currently, logs only end up in /var/log/syslog. The need to be piped to the journal somehow.
+
 ## ability to migrate using priv
 
 Given a private key or wallet.dat stake address and nodeid, add the ability to migrate hosts.
@@ -70,7 +74,7 @@ Currently, the automation gets you to the point where you can get a new z addres
 
 # encrypting vault & using password.sh
 
-Once you've set up everyhting inside your secrets.yml , you should encrypt it so that it's just just plaintext on the server.
+Once you've set up everyhting inside your secrets.yml , you should encrypt it so that it's not just plaintext on the server.
 
 ```
 ansible-vault encrypt secrets.yml
@@ -105,3 +109,52 @@ ansible-playbook start-ssh.yml
 ```
 ansible-playbook stop-ssh.yml
 ```
+
+# Logging
+
+zend is configured for syslog, and the containers are configured to send all their logs through syslog to the host.
+
+## Inspecting logs 
+
+watching logs the host:
+
+```
+
+tail -f /var/log/syslog | grep sn10
+```
+
+You can also just use `less and use the "follow" feature by pressing `Shift+F`
+
+
+getting all logs from a container 
+
+```
+grep "sn1 " /var/log/syslog | less
+```
+getting all secnodetracker
+logs from a container 
+
+```
+grep "sn1 " /var/log/syslog | less
+```
+getting all logs from a container 
+
+```
+grep "sn1 " /var/log/syslog | less
+```
+
+# systemd (system services)
+
+I created systemd unit files for all service instead of using third party management tools.
+
+## Service
+
+### Restart zend
+
+
+
+# Nodes command
+
+I have added a `nodes-command` alias that basically performs a command through lxc on all the containers.
+
+
