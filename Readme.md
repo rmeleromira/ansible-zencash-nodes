@@ -13,7 +13,7 @@ Since this uses ansible, install it
 
 ```
 apt-get update
-apt-get install python3-pip python-lxc libssl-dev git -y
+apt-get install python3 python3-pip python-lxc libssl-dev git -y
 pip3 install ansible
 pip3 install -U cryptography
 ```

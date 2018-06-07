@@ -59,22 +59,24 @@
     path: /etc/lxc/dnsmasq.conf
     create: yes
   register: dhcp_added
+  when: "groups['monitoring'] is defined"
 
 - name: Enable static lxc addresses
   lineinfile:
     path: /etc/default/lxc-net
     line: 'LXC_DHCP_CONFILE=/etc/lxc/dnsmasq.conf'
   register: lxc_net
+  when: "groups['monitoring'] is defined"
 
 - name: Restart lxc-net
   systemd:
     name: lxc-net
     state: restarted
-  when: lxc_net.changed or dhcp_added.changed
+  when: (lxc_net.changed or dhcp_added.changed) and groups['monitoring'] is defined
 
 - name: Restablish lxcbr0 arp entries & ipv6 address
   shell: /etc/add-ndp-proxy.sh
-  when: lxc_net.changed or dhcp_added.changed
+  when: (lxc_net.changed or dhcp_added.changed) and groups['monitoring'] is defined
 
 - name: Check if containers are configured
   stat:
@@ -122,6 +124,7 @@
   stat:
     path: /var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/.configured
   register: monitoring_containers_configured
+  when: "groups['monitoring'] is defined"
 
 - name: Create monitoring container
   lxc_container:
@@ -148,13 +151,13 @@
       apt-get -y install openssh-server python
       mkdir /root/.ssh
       echo '{{ssh_public_key}}' > /root/.ssh/authorized_keys
-  when: monitoring_containers_configured.stat.exists == False
+  when: groups['monitoring'] is defined and monitoring_containers_configured.stat.exists == False
 
 - name: Create configuration check file
   file:
     state: touch
     path: /var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/.configured
-  when: monitoring_containers_configured.stat.exists == False
+  when: groups['monitoring'] is defined and monitoring_containers_configured.stat.exists == False
 
 - name: Configure autostart for secure node containers
   lineinfile:
@@ -168,6 +171,7 @@
     path: "/var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/config"
     regexp: '^lxc.start.auto ='
     line: 'lxc.start.auto = 1'
+  when: "groups['monitoring'] is defined"
 
 - name: Configure start delay for secure node containers
   lineinfile:
@@ -180,6 +184,7 @@
   lineinfile:
     path: "/var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/config"
     line: 'lxc.start.order = 0'
+  when: "groups['monitoring'] is defined"
 
 - name: Create zen folder
   file:
