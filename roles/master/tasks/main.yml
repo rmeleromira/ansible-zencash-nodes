@@ -25,11 +25,6 @@
     src: lxcbr0.service
     dest: /etc/systemd/system/lxcbr0.service
 - systemd:
-    name: lxcbr0
-    state: started
-    enabled: yes
-    daemon_reload: yes
-- systemd:
     name: fail2ban
     state: started
     enabled: yes
@@ -38,6 +33,11 @@
     src: add-ndp-proxy.sh
     dest: /etc/add-ndp-proxy.sh
     mode: o+x
+- systemd:
+    name: lxcbr0
+    state: started
+    enabled: yes
+    daemon_reload: yes
 - lineinfile:
     path: /etc/default/ufw
     regexp: '^DEFAULT_FORWARD_POLICY='
