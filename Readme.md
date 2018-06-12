@@ -18,7 +18,16 @@ pip3 install ansible
 pip3 install -U cryptography
 ```
 
+Clone the repo
+
+```
+git clone https://github.com/rmeleromira/ansible-zencash-nodes/
+cd ansible-zencash-nodes/
+```
+
 Copy the example inventory and secrets file and fill out the values in the secrets file and uncomment the nodes that you're going to deploy in the inventory .yml. Make sure your DNS matches
+
+Might be necessary to adjust the ansible_fqdn and vault_secure_nodes_prefix/vault_super_nodes_prefix variables to match your naming scheme.
 
 Run the playbook
 

@@ -24,7 +24,8 @@
   copy:
     src: lxcbr0.service
     dest: /etc/systemd/system/lxcbr0.service
-- systemd:
+- name: Start and enable fail2ban
+  systemd:
     name: fail2ban
     state: started
     enabled: yes
@@ -33,12 +34,14 @@
     src: add-ndp-proxy.sh
     dest: /etc/add-ndp-proxy.sh
     mode: o+x
-- systemd:
+- name: Start and enable lxcbr0 service
+  systemd:
     name: lxcbr0
     state: started
     enabled: yes
     daemon_reload: yes
-- lineinfile:
+- name: Set forwarding policy to accept on ufw
+  lineinfile:
     path: /etc/default/ufw
     regexp: '^DEFAULT_FORWARD_POLICY='
     line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
@@ -46,13 +49,17 @@
   ufw:
     rule: allow
     from: "{{ipv6_bridge_address}}/112"
-- name: Set logging
+- name: Allow ssh access 
+  ufw:
+    rule: allow
+    port: 22
+  tags: test
+- name: Enable ufw logging
   ufw:
     logging: on
-- name: Allow everything and enable UFW
+- name: Start and enable ufw and loads rules
   ufw:
     state: enabled
-
 - name: Configure static address for monitoring
   lineinfile:
     line: dhcp-host=monitoring.{{vault_domain}},10.0.3.100
@@ -180,7 +187,6 @@
   with_items: "{{ groups['nodes'] }}"
 
 - name: Configure start order for monitoring container
-  tags: test
   lineinfile:
     path: "/var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/config"
     line: 'lxc.start.order = 0'
