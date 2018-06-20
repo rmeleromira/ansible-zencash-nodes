@@ -1,0 +1,177 @@
+all:
+  vars:
+    secure_nodes_prefix: sec
+    super_nodes_prefix: sup
+    ipv6_subnet: "2a45:c456:4493:5534:c:c:c:"
+    ssh_public_key: ssh-rsa AAAAB3Nz..K7n8DX5dBeEQlEBN6fcVN your_user@ansible_controler
+    blocks_directory: /root/chain
+    global_tracker_region: eu
+    global_tracker_email: your_email@gmail.com
+    global_domain: your-nodes-address.com
+    swap_size_gb: 24
+  children:
+    master:
+      vars:
+        ansible_become_pass: "super_secret_password"
+        ansible_user: "your_user"
+      hosts:
+        master01:
+          ansible_host: "your-nodes-address.com"
+    supernodes:
+      vars:
+        ansible_user: root
+        tracker_region: "{{global_tracker_region}}"
+#      hosts:
+#        supnode01:
+#          ansible_fqdn: "{{vault_nodes['supnode01'].ansible_fqdn}}"
+#          ansible_host: "{{vault_nodes['supnode01'].ansible_host}}"
+#          stake_address:
+#          tracker_email: "{{vault_nodes['supnode01'].tracker_email}}"
+#        supnode02:
+#          ansible_fqdn: "{{vault_nodes['supnode02'].ansible_fqdn}}"
+#          ansible_host: "{{vault_nodes['supnode02'].ansible_host}}"
+#          stake_address:
+#          tracker_email: "{{vault_nodes['supnode02'].tracker_email}}"
+#        supnode03:
+#          ansible_fqdn: "{{vault_nodes['supnode03'].ansible_fqdn}}"
+#          ansible_host: "{{vault_nodes['supnode03'].ansible_host}}"
+#          stake_address:
+#          tracker_email: "{{vault_nodes['supnode03'].tracker_email}}"
+    nodes:
+      vars:
+        ansible_user: root
+        tracker_email: "{{global_tracker_email}}"
+        tracker_region: "{{global_tracker_region}}"
+      hosts:
+        secnode01:
+          ansible_fqdn: "{{secure_nodes_prefix}}01.{{global_domain}}"
+          ansible_host: "{{ipv6_subnet}}21"
+          stake_address:
+          tracker_email: "{{global_tracker_email}}"
+        # secnode02:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}02.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}22"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode03:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}03.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}23"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode04:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}04.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}24"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode05:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}05.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}25"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode06:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}06.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}26"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode07:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}07.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}27"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode08:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}08.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}28"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode09:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}09.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}29"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode10:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}10.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}30"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode11:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}11.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}31"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode12:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}12.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}32"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode13:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}13.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}33"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode14:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}14.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}34"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode15:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}15.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}35"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode16:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}16.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}36"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode17:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}17.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}37"
+        #   stake_address: 
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode18:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}18.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}38"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode19:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}19.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}39"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode20:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}20.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}40"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode21:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}21.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}41"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode22:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}22.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}42"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode23:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}23.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}43"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode24:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}24.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}44"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+        # secnode25:
+        #   ansible_fqdn: "{{secure_nodes_prefix}}25.{{global_domain}}"
+        #   ansible_host: "{{ipv6_subnet}}45"
+        #   stake_address:
+        #   tracker_email: "{{global_tracker_email}}"
+
+    # monitoring:
+    #   hosts:
+    #     mon:
+    #       ansible_user: root
+    #       ansible_host: "{{ipv6_subnet}}50"
+    #       ansible_fqdn: "monitoring.{{global_domain}}"
