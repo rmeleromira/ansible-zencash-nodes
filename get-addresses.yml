@@ -1,0 +1,48 @@
+---
+- hosts: nodes
+  vars:
+    addresses: []
+  vars_files:
+    - secrets.yml
+  gather_facts: false
+  tasks:
+    - name: Check for existing z address
+      shell: zen-cli z_listaddresses
+      register: existing_z_address
+    - debug: msg="{{ ansible_fqdn }} - {{existing_z_address.stdout | regex_replace('\[\n  \"') | regex_replace('\"\n\]')}}"
+      when: existing_z_address.stdout | from_json | length > 0
+    # - set_fact:
+    #     address: "{{existing_z_address.stdout | from_json}}"
+    #   when: existing_z_address.stdout | from_json | length > 0
+    # - set_fact:
+    #     addresses: "{{addresses | union([{'{{ansible_fqdn}}':'{{address[0]}}'}])}}"
+    #   when: existing_z_address.stdout | from_json | length > 0
+    # - debug: var=addresses
+    - name: Generate address if it doesn't exist
+      shell: zen-cli z_getnewaddress
+      when: existing_z_address.stdout | from_json | length == 0
+      register: new_z_address
+    - debug: msg="{{ ansible_fqdn }} - {{new_z_address.stdout}}"
+      when: existing_z_address.stdout | from_json | length == 0
+    # - set_fact:
+    #     address: "{{new_z_addresses.stdout | from_json}}"
+    #   when: new_z_address is defined and new_z_address.stdout | from_json | length == 0
+    # - set_fact:
+    #     addresses: "{{addresses}} + ['{{ansible_fqdn}}':'{{address[0]}}']}}"
+    #   when: new_z_address is defined and new_z_address.stdout | from_json | length == 0
+    # - debug: var=addresses
+# - hosts: master
+#   gather_facts: false
+#   tasks:
+#     - name: Generate addresses report
+#       lineinfile:
+#         line: "{{ansible_host}} : {{new_z_addresses.stdout | from_json}}"
+#         path: /root/addresses.txt
+#         create: true
+#       when: new_z_addresses is defined
+#     - name: Generate addresses report
+#       lineinfile:
+#         line: "{{ansible_host}} : {{existing_z_addresses.stdout | from_json}}"
+#         path: /root/addresses.txt
+#         create: true
+#       when: existing_z_addresses is defined

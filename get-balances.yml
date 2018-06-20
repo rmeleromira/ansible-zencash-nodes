@@ -1,0 +1,12 @@
+---
+- hosts: nodes
+  vars:
+    addresses: []
+  vars_files:
+    - secrets.yml
+  gather_facts: false
+  tasks:
+    - name: Get balance
+      shell: zen-cli z_gettotalbalance
+      register: balance
+    - debug: msg="{{ansible_fqdn}} - {{ balance.stdout | from_json }}"

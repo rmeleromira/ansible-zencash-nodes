@@ -1,0 +1,17 @@
+---
+- hosts: nodes
+  vars:
+    addresses: []
+  vars_files:
+    - secrets.yml
+  gather_facts: false
+  tasks:
+    - name: Get existing z address
+      shell: zen-cli z_listaddresses
+      register: existing_z_address
+    - name: Get private key
+      shell: zen-cli z_exportkey {{existing_z_address.stdout | regex_replace('\[\n  \"') | regex_replace('\"\n\]')}}
+      register: private_z_address
+      when: existing_z_address.stdout | from_json | length > 0
+    - debug: msg="{{ ansible_fqdn }} - {{private_z_address.stdout}}"
+      when: existing_z_address.stdout | from_json | length > 0

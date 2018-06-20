@@ -1,4 +1,41 @@
 ---
+- name: Create swap space
+  command: fallocate -l {{swap_size_gb}}G /extraswap
+  when: ansible_swaptotal_mb < 1
+  register: swap_add
+
+- name: Make swap
+  command: mkswap /extraswap
+  when: ansible_swaptotal_mb < 1
+
+- name: Add to fstab
+  action: lineinfile dest=/etc/fstab regexp="extraswap" line="/extraswap none swap sw 0 0" state=present
+
+- name: Turn swap on
+  command: swapon -a
+  when: swap_add.changed
+
+- name: Set hostname to {{global_domain}}
+  hostname:
+    name: "{{global_domain}}"
+
+- name: Add nodes-command and bash-completion
+  blockinfile:
+    block: |
+      nodes-command () {
+        for i in `lxc-ls | sort`; do
+          echo -e "\033[0;31mContainer:$i\033[0m";lxc-attach -n $i -- $1;
+        done
+      }
+      if ! shopt -oq posix; then
+        if [ -f /usr/share/bash-completion/bash_completion ]; then
+          . /usr/share/bash-completion/bash_completion
+        elif [ -f /etc/bash_completion ]; then
+          . /etc/bash_completion
+        fi
+      fi
+    path: /etc/bash.bashrc
+
 - name: Configure sysctl
   sysctl:
     name: "{{item.name}}"
@@ -15,54 +52,84 @@
   - { name: fs.inotify.max_user_watches, value: 1048576 }
   - { name: vm.max_map_count, value: 262144 }
   - { name: kernel.dmesg_restrict, value: 1 }
+  - { name: kernel.unprivileged_userns_clone, value: 1 }
+
 - name: Download prerequisites
   apt:
-    name: lxc,python-lxc,ufw,fail2ban
+    name: lxc,python-lxc,ufw,fail2ban,libpam-cgroup,libpam-cgfs,bridge-utils,acl,bash-completion
     state: present
     update_cache: yes
+
 - name: Copy lxcbr0 service to enable ipv6 arp proxying
   copy:
     src: lxcbr0.service
     dest: /etc/systemd/system/lxcbr0.service
+
 - name: Start and enable fail2ban
   systemd:
     name: fail2ban
     state: started
     enabled: yes
+
 - name: Template ndp proxy script
   template:
     src: add-ndp-proxy.sh
     dest: /etc/add-ndp-proxy.sh
     mode: o+x
+
 - name: Start and enable lxcbr0 service
   systemd:
     name: lxcbr0
     state: started
     enabled: yes
     daemon_reload: yes
+
 - name: Set forwarding policy to accept on ufw
   lineinfile:
     path: /etc/default/ufw
     regexp: '^DEFAULT_FORWARD_POLICY='
     line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+
 - name: Allow access to rsyslog from container's network
   ufw:
     rule: allow
     from: "{{ipv6_bridge_address}}/112"
-- name: Allow ssh access 
+
+- name: Allow ssh access
   ufw:
     rule: allow
     port: 22
-  tags: test
+
+- name: Disable root login
+  lineinfile:
+    line: PermitRootLogin yes
+    state: absent
+    path: /etc/ssh/sshd_config
+  register: ssh_settings_root
+
+- name: Disable password auth
+  lineinfile:
+    line: PasswordAuthentication no
+    path: /etc/ssh/sshd_config
+  register: ssh_settings_password
+
+- name: Restart ssh server
+  systemd:
+    name: ssh
+    state: restarted
+  when: ssh_settings_root.changed or ssh_settings_password.changed
+
 - name: Enable ufw logging
   ufw:
     logging: on
-- name: Start and enable ufw and loads rules
+
+- name: Start and enable ufw and load rules
   ufw:
     state: enabled
+
 - name: Configure static address for monitoring
   lineinfile:
-    line: dhcp-host=monitoring.{{vault_domain}},10.0.3.100
+    line: dhcp-host=monitoring.{{global_domain}},10.0.3.100
     path: /etc/lxc/dnsmasq.conf
     create: yes
   register: dhcp_added
@@ -85,15 +152,69 @@
   shell: /etc/add-ndp-proxy.sh
   when: (lxc_net.changed or dhcp_added.changed) and groups['monitoring'] is defined
 
+- name: Start and enable apparmor
+  systemd:
+    name: apparmor
+    state: started
+    enabled: true
+
+# - name: create lxc user
+#   user:
+#     name: lxc
+#     shell: /bin/nologin
+#   register: lxc_user
+#
+# - name: Get LXC user subuid/subgid
+#   shell: "cat  /etc/s*id|grep lxc | tail -n 1 | awk -F ':' '{ print $2 }'"
+#   register: lxc_subuid
+#   # when: lxc_user.changed
+#
+# - name: Get LXC user subuid/subgid range
+#   shell: "cat  /etc/s*id|grep lxc | tail -n 1 | awk -F ':' '{ print $3 }'"
+#   register: lxc_subuid_range
+#   # when: lxc_user.changed
+#
+# - name: Add subuid to LXC user
+#   shell: usermod --add-subuids {{ lxc_subuid.stdout }}-{{lxc_subuid.stdout|int + lxc_subuid_range.stdout|int}} lxc
+#   when: lxc_user.changed
+#
+# - name: Add subgid to LXC user
+#   shell: usermod --add-subgids {{ lxc_subuid.stdout }}-{{lxc_subuid.stdout|int + lxc_subuid_range.stdout|int}} lxc
+#   when: lxc_user.changed
+
+# - name: Add subuid/subgid to lxc config
+#   blockinfile:
+#     block: |
+#       lxc.id_map = u 0 {{lxc_subuid.stdout}} {{lxc_subuid_range.stdout}}
+#       lxc.id_map = g 0 {{lxc_subuid.stdout}} {{lxc_subuid_range.stdout}}
+#       lxc.mount.auto = proc:mixed sys:ro cgroup:mixed
+#     path: /home/lxc/.config/lxc/default.conf
+#     create: true
+#
+# - name: Allow lxc user network permissions
+#   lineinfile:
+#     line: lxc veth lxcbr0 50
+#     path: /etc/lxc/lxc-usernet
+#
+# - name: Set permissions for lxc user home dir
+#   file:
+#     path: /home/lxc/
+#     owner: lxc
+#     group: lxc
+#     recurse: true
+
 - name: Check if containers are configured
   stat:
-      path: /var/lib/lxc/{{vault_nodes[item].ansible_fqdn}}/.configured
+      path: /var/lib/lxc/{{hostvars[item].ansible_fqdn}}/.configured
   with_items: "{{ groups['nodes'] }}"
   register: containers_configured
 
 - name: Create secure node containers
+  # become: yes
+  # become_user: lxc
+  # become_method: sudo
   lxc_container:
-    name: "{{vault_nodes[item.item].ansible_fqdn}}"
+    name: "{{hostvars[item.item].ansible_fqdn}}"
     container_log: true
     template: ubuntu
     state: started
@@ -106,7 +227,7 @@
       auto eth0
       iface eth0 inet dhcp
       iface eth0 inet6 static
-        address {{vault_nodes[item.item].ansible_host}}
+        address {{hostvars[item.item].ansible_host}}
         netmask 112
         gateway {{ipv6_bridge_address}}
       EOF
@@ -123,19 +244,19 @@
 - name: Create secure nodes configuration check file
   file:
     state: touch
-    path: /var/lib/lxc/{{vault_nodes[item.item].ansible_fqdn}}/.configured
+    path: /var/lib/lxc/{{hostvars[item.item].ansible_fqdn}}/.configured
   loop: "{{containers_configured.results}}"
   when: item.stat.exists == False
 
 - name: Check if monitoring container is configured
   stat:
-    path: /var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/.configured
+    path: /var/lib/lxc/{{hostvars[groups['monitoring'][0]].ansible_fqdn}}.{{global_domain}}/.configured
   register: monitoring_containers_configured
   when: "groups['monitoring'] is defined"
 
 - name: Create monitoring container
   lxc_container:
-    name: "{{vault_monitoring.ansible_fqdn}}"
+    name: "{{hostvars[groups['monitoring'][0]].ansible_fqdn}}"
     container_log: true
     template: ubuntu
     state: started
@@ -147,7 +268,7 @@
        auto eth0
       iface eth0 inet dhcp
       iface eth0 inet6 static
-        address {{vault_monitoring.ansible_host}}
+        address {{hostvars[groups['monitoring'][0]].ansible_host}}
         netmask 112
         gateway {{ipv6_bridge_address}}
       EOF
@@ -160,47 +281,47 @@
       echo '{{ssh_public_key}}' > /root/.ssh/authorized_keys
   when: groups['monitoring'] is defined and monitoring_containers_configured.stat.exists == False
 
-- name: Create configuration check file
+- name: Create monitoring container configuration check file
   file:
     state: touch
-    path: /var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/.configured
+    path: /var/lib/lxc/{{hostvars[groups['monitoring'][0]].ansible_fqdn}}/.configured
   when: groups['monitoring'] is defined and monitoring_containers_configured.stat.exists == False
 
 - name: Configure autostart for secure node containers
   lineinfile:
-    path: "/var/lib/lxc/{{vault_nodes[item].ansible_fqdn}}/config"
+    path: "/var/lib/lxc/{{hostvars[item].ansible_fqdn}}/config"
     regexp: '^lxc.start.auto ='
     line: 'lxc.start.auto = 1'
   with_items: "{{ groups['nodes'] }}"
 
 - name: Configure autostart for monitoring container
   lineinfile:
-    path: "/var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/config"
+    path: "/var/lib/lxc/{{hostvars[groups['monitoring'][0]].ansible_fqdn}}/config"
     regexp: '^lxc.start.auto ='
     line: 'lxc.start.auto = 1'
   when: "groups['monitoring'] is defined"
 
 - name: Configure start delay for secure node containers
   lineinfile:
-    path: "/var/lib/lxc/{{vault_nodes[item].ansible_fqdn}}/config"
+    path: "/var/lib/lxc/{{hostvars[item].ansible_fqdn}}/config"
     line: 'lxc.start.delay = 25'
   with_items: "{{ groups['nodes'] }}"
 
 - name: Configure start order for monitoring container
   lineinfile:
-    path: "/var/lib/lxc/{{vault_monitoring.ansible_fqdn}}/config"
+    path: "/var/lib/lxc/{{hostvars[groups['monitoring'][0]].ansible_fqdn}}/config"
     line: 'lxc.start.order = 0'
   when: "groups['monitoring'] is defined"
 
 - name: Create zen folder
   file:
-    path: /var/lib/lxc/{{vault_nodes[item.item].ansible_fqdn}}/rootfs/home/zend/.zen/
+    path: /var/lib/lxc/{{hostvars[item.item].ansible_fqdn}}/rootfs/home/zend/.zen/
     state: directory
   loop: "{{containers_configured.results}}"
   when: item.stat.exists == False
 
 - name: Copy blockchain blocks
-  shell: cp -r * /var/lib/lxc/{{vault_nodes[item.item].ansible_fqdn}}/rootfs/home/zend/.zen
+  shell: cp -r * /var/lib/lxc/{{hostvars[item.item].ansible_fqdn}}/rootfs/home/zend/.zen
   args:
     chdir: "{{blocks_directory}}"
   loop: "{{containers_configured.results}}"

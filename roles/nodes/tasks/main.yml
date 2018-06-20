@@ -1,5 +1,4 @@
 ---
-
 - name: Check for previously generated username
   stat:
     path: /home/zend/.zen/.username
@@ -61,6 +60,7 @@
   user:
     name: zend
     state: present
+    shell: /bash/nologin
 
 - name: Set zend folder owner
   file:
@@ -154,8 +154,6 @@
   shell: update-ca-certificates
   when: ca_cert.changed
 
-# configure rsyslog
-
 - name: Forward syslog to host
   copy:
     dest: /etc/rsyslog.d/50-default.conf
@@ -167,8 +165,6 @@
     name: rsyslog
     state: restarted
   when: syslog_configured.changed
-
-# systemd services
 
 - name: Copy zend service script
   copy:
@@ -268,12 +264,24 @@
     - { name: "stakeaddr",value: "{{stake_address}}"}
   register: template_settings
 
-- name: Check for servers config
+- debug: msg={{tracker_nodeid is defined and tracker_nodeid | length > 0}}
+  tags: test
+
+- name: Template nodeid
+  tags: test
+  copy:
+    content: "{{tracker_nodeid}}"
+    dest: "/home/zend/secnodetracker/config/nodeid"
+    owner: zend
+    group: zend
+  when: tracker_nodeid is defined and tracker_nodeid | length > 0
+
+- name: Check for secnodetracker servers config
   stat:
     path: /home/zend/secnodetracker/config/servers
   register: servers_config_exists
 
-- name: Template servers config
+- name: Template secnodetracker servers config
   copy:
     content: "ts2.eu,ts1.eu,ts3.eu,ts4.eu,ts4.na,ts3.na,ts2.na,ts1.na"
     dest: "/home/zend/secnodetracker/config/servers"
@@ -288,14 +296,6 @@
     enabled: yes
     state: restarted
   when: template_settings.changed
-
-# secnodetracker
-
-# add .bashrc lxc-command
-
-# nologin for zend user
-
-# create zen.conf for root
 
 - name: Create .zen folder for root
   file:

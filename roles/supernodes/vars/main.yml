@@ -1,0 +1,5 @@
+---
+ansible_python_interpreter: /usr/bin/python3
+ansible_become: yes
+ipv6_bridge_address: "{{ipv6_subnet}}1"
+ipv6_interface: eth0
