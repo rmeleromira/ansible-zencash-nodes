@@ -10,3 +10,7 @@
       systemd:
         name: zend
         state: restarted
+    - name: Restart secnodetracker service
+      systemd:
+        name: secnodetracker
+        state: restarted
