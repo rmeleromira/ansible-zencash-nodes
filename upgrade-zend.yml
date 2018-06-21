@@ -1,0 +1,12 @@
+---
+- hosts: nodes
+  tasks:
+    - name: Update zen packages
+      apt:
+        name: zen
+        update_cache: true
+        state: latest
+    - name: Restart zend service
+      systemd:
+        name: zend
+        state: restarted
