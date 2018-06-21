@@ -2,8 +2,6 @@
 - hosts: nodes
   vars:
     addresses: []
-  vars_files:
-    - secrets.yml
   gather_facts: false
   tasks:
     - name: Get balance
