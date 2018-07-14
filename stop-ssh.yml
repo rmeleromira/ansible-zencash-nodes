@@ -5,12 +5,9 @@
   tasks:
     - name: Stop secure node ssh servers
       shell: lxc-attach -n {{hostvars[item].ansible_fqdn}} -- systemctl stop ssh
-      with_items: "{{ groups['nodes'] }}"
-      when: groups['nodes'] is defined
+      with_items: "{{ groups['securenodes'] }}"
+      when: groups['securenodes'] is defined
     - name: Stop super node ssh servers
       shell: lxc-attach -n {{hostvars[item].ansible_fqdn}} -- systemctl stop ssh
       with_items: "{{ groups['supernodes'] }}"
       when: groups['supernodes'] is defined
-    - name: Stop monitoring node ssh server
-      shell: lxc-attach -n {{hostvars[groups['monitoring'][0]].ansible_fqdn}} -- systemctl stop ssh
-      when: groups['monitoring'] is defined

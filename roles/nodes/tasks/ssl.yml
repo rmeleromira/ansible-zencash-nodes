@@ -1,0 +1,57 @@
+---
+- name: Create zend user
+  user:
+    name: zend
+    state: present
+    shell: /bash/nologin
+
+- name: Set zend folder owner
+  file:
+    path: /home/zend
+    owner: zend
+    group: zend
+    recurse: yes
+
+- name: Clone acme.sh
+  git:
+    repo: https://github.com/Neilpang/acme.sh.git
+    dest: /home/zend/acme.sh
+    version: master
+
+- name: Check for acme.sh
+  stat:
+    path: /home/zend/.acme.sh
+  register: acme_exists
+
+- name: Install acme.sh
+  become_user: zend
+  shell: /home/zend/acme.sh/acme.sh --install
+  args:
+    chdir: /home/zend/acme.sh
+  when: acme_exists.stat.exists == False
+
+- name: Allow acme.sh sudo
+  lineinfile:
+    path: "/etc/sudoers"
+    line: 'zend ALL=(ALL) NOPASSWD: /home/zend/.acme.sh/acme.sh'
+
+- name: Check for certificate
+  stat:
+    path: "/home/zend/.acme.sh/{{ansible_fqdn}}/{{ansible_fqdn}}.cer"
+  register: certificate_exists
+
+- name: Get SSL certificate
+  become_user: zend
+  shell: "sudo /home/zend/.acme.sh/acme.sh --issue --standalone -d {{ansible_fqdn}} --listen-v6"
+  when: certificate_exists.stat.exists == False
+
+- name: Copy ca.crt
+  copy:
+    src: /home/zend/.acme.sh/{{ansible_fqdn}}/ca.cer
+    dest: /usr/local/share/ca-certificates/ca.crt
+    remote_src: yes
+  register: ca_cert
+
+- name: Update ca-certificates
+  shell: update-ca-certificates
+  when: ca_cert.changed

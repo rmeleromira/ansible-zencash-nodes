@@ -1,5 +1,5 @@
 ---
-- hosts: nodes
+- hosts: securenodes,supernodes
   vars:
     addresses: []
   gather_facts: false
@@ -7,8 +7,8 @@
     - name: Check for existing z address
       shell: zen-cli z_listaddresses
       register: existing_z_address
-    - debug: msg="{{ ansible_fqdn }} - {{existing_z_address.stdout | regex_replace('\[\n  \"') | regex_replace('\"\n\]')}}"
-      when: existing_z_address.stdout | from_json | length > 0
+    - debug: msg="{{ ansible_fqdn }} - {{existing_z_address.stdout | regex_replace('\[\n  \"') | regex_replace('\"\n\]') | regex_replace('')}}"
+      when: existing_z_address.stdout | from_json | length == 2
     # - set_fact:
     #     address: "{{existing_z_address.stdout | from_json}}"
     #   when: existing_z_address.stdout | from_json | length > 0
@@ -16,12 +16,17 @@
     #     addresses: "{{addresses | union([{'{{ansible_fqdn}}':'{{address[0]}}'}])}}"
     #   when: existing_z_address.stdout | from_json | length > 0
     # - debug: var=addresses
-    - name: Generate address if it doesn't exist
+    - name: Generate first address
       shell: zen-cli z_getnewaddress
       when: existing_z_address.stdout | from_json | length == 0
-      register: new_z_address
-    - debug: msg="{{ ansible_fqdn }} - {{new_z_address.stdout}}"
+      register: first_new_z_address
+    - name: Generate second address
+      shell: zen-cli z_getnewaddress
+      when: existing_z_address.stdout | from_json | length == 0 or existing_z_address.stdout | from_json | length == 1
+      register: second_new_z_address
+    - debug: msg="{{ ansible_fqdn }} - {{first_new_z_address.stdout}} - {{second_new_z_address.stdout}}"
       when: existing_z_address.stdout | from_json | length == 0
+
     # - set_fact:
     #     address: "{{new_z_addresses.stdout | from_json}}"
     #   when: new_z_address is defined and new_z_address.stdout | from_json | length == 0

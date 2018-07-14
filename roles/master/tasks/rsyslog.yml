@@ -1,0 +1,14 @@
+---
+- name: Enable tcp for rsyslog
+  blockinfile:
+    path: /etc/rsyslog.conf
+    block: |
+      module(load="imtcp")
+      input(type="imtcp" port="514")
+  register: rsyslog_added
+
+- name: Restart rsyslog
+  systemd:
+    name: rsyslog
+    state: restarted
+  when: rsyslog_added.changed

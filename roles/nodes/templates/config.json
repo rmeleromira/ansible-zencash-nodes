@@ -1,0 +1,28 @@
+{
+ "active": "{{node_type}}",
+ "{{node_type}}": {
+  "nodetype": "{{node_type}}",
+  {% if 'None' in nodeid %}
+"nodeid": null,
+  {% else %}
+"nodeid": {{nodeid}},
+  {% endif %}
+"servers": [
+   "{{tracker_prefix}}1.eu",
+   "{{tracker_prefix}}2.eu",
+   "{{tracker_prefix}}3.eu",
+   "{{tracker_prefix}}4.eu",
+   "{{tracker_prefix}}1.na",
+   "{{tracker_prefix}}2.na",
+   "{{tracker_prefix}}3.na",
+   "{{tracker_prefix}}4.na"
+  ],
+  "stakeaddr": "{{stake_address}}",
+  "email": "{{tracker_email}}",
+  "fqdn": "{{ansible_fqdn}}",
+  "ipv": "6",
+  "region": "{{tracker_region}}",
+  "home": "{{home}}",
+  "category": "{{category}}"
+ }
+}

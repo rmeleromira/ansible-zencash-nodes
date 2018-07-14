@@ -1,0 +1,12 @@
+---
+- name: Forward syslog to host
+  copy:
+    dest: /etc/rsyslog.d/50-default.conf
+    content: '*.* action(type="omfwd" target="{{ipv6_bridge_address}}" port="514" protocol="tcp")'
+  register: syslog_configured
+
+- name: Restart rsyslog
+  systemd:
+    name: rsyslog
+    state: restarted
+  when: syslog_configured.changed

@@ -1,0 +1,5 @@
+---
+- name: Disable ssh server
+  systemd:
+    name: ssh
+    enabled: false

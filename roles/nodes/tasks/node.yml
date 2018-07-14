@@ -1,0 +1,23 @@
+---
+- name: Check for npm
+  stat:
+    path: /root/.npm/n/
+  register: npm_exists
+
+- name: Install npm
+  shell: npm install -g n
+  when: npm_exists.stat.exists == False
+
+- name: Check for nodejs
+  stat:
+    path: /usr/local/n
+  register: nodejs_exists
+
+- name: Install nodejs
+  shell: n latest
+  when: nodejs_exists.stat.exists == False
+
+- name: Check for nodejs
+  stat:
+    path: /home/zend/nodetracker/package-lock.json
+  register: modules_exists

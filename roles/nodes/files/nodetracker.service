@@ -1,11 +1,11 @@
 [Unit]
-Description=ZenCash Secure Node Tracker
+Description=ZenCash Node Tracker
 After=network.target zend.service
 
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/node app.js
-WorkingDirectory=/home/zend/secnodetracker
+WorkingDirectory=/home/zend/nodetracker
 Restart=always
 User=zend
 Group=zend

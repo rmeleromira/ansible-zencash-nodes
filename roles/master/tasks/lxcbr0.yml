@@ -1,0 +1,18 @@
+---
+- name: Copy lxcbr0 service to enable ipv6 arp proxying
+  copy:
+    src: lxcbr0.service
+    dest: /etc/systemd/system/lxcbr0.service
+
+- name: Template ndp proxy script
+  template:
+    src: add-ndp-proxy.sh
+    dest: /etc/add-ndp-proxy.sh
+    mode: o+x
+
+- name: Start and enable lxcbr0 service
+  systemd:
+    name: lxcbr0
+    state: started
+    enabled: yes
+    daemon_reload: yes

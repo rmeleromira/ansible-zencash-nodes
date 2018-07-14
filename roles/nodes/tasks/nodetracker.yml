@@ -1,0 +1,54 @@
+---
+- name: Copy nodetracker service script
+  copy:
+    src: nodetracker.service
+    dest: /etc/systemd/system/nodetracker.service
+
+- name: Check for nodetracker
+  stat:
+    path: /home/zend/nodetracker
+  register: nodetracker_exists
+
+- name: Clone nodetracker
+  become_user: zend
+  git:
+    repo: https://github.com/ZencashOfficial/nodetracker
+    dest: /home/zend/nodetracker
+    version: master
+  when: nodetracker_exists.stat.exists == False
+
+- name: Get npm packages
+  shell: npm install
+  become_user: zend
+  args:
+    chdir: /home/zend/nodetracker/
+  when: modules_exists.stat.exists == False
+  
+- name: Check for nodetracker config folder
+  stat:
+    path: /home/zend/nodetracker/config
+  register: config_exists
+
+- name: Create nodetracker config folder
+  file:
+    path: /home/zend/nodetracker/config
+    state: directory
+    owner: zend
+    group: zend
+  when: config_exists.stat.exists == False
+
+- name: Template settings
+  template:
+    src: config.json
+    dest: "/home/zend/nodetracker/config/config.json"
+    owner: zend
+    group: zend
+  register: template_settings
+
+- name: Start and enable nodetracker
+  systemd:
+    daemon_reload: yes
+    name: nodetracker
+    enabled: yes
+    state: restarted
+  when: template_settings.changed

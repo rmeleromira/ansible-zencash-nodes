@@ -1,0 +1,96 @@
+---
+- name: Define secure and super nodes
+  set_fact:
+    nodes: "{{groups['securenodes'] | union(groups['supernodes'])}}"
+  when: groups['securenodes'] is defined and groups['supernodes'] is defined
+
+- name: Define secure nodes
+  set_fact:
+    nodes: "{{groups['securenodes']}}"
+  when: groups['securenodes'] is defined and groups['supernodes'] is not defined
+
+- name: Define supernodes
+  set_fact:
+    nodes: "{{groups['supernodes']}}"
+  when: groups['supernodes'] is defined and groups['securenodes'] is not defined
+
+- name: Configure ipv4 static addresses for supernodes
+  lineinfile:
+    line: dhcp-host={{hostvars[item].ansible_fqdn}},{{hostvars[item].private_ipv4_address}}
+    path: /etc/lxc/dnsmasq.conf
+    create: yes
+  with_items: "{{ groups['supernodes'] }}"
+  register: supernodes_dhcp_added
+  when: "groups['supernodes'] is defined"
+
+- name: Enable static lxc addresses
+  lineinfile:
+    path: /etc/default/lxc-net
+    line: 'LXC_DHCP_CONFILE=/etc/lxc/dnsmasq.conf'
+  register: lxc_net
+  when: "groups['supernodes'] is defined"
+
+- name: Restart lxc-net
+  systemd:
+    name: lxc-net
+    state: restarted
+  when: lxc_net.changed or supernodes_dhcp_added.changed
+
+- name: Restablish lxcbr0 arp entries & ipv6 address
+  shell: /etc/add-ndp-proxy.sh
+  when: lxc_net.changed or supernodes_dhcp_added.changed
+
+- name: Check if containers are configured
+  stat:
+      path: /var/lib/lxc/{{hostvars[item].ansible_fqdn}}/.configured
+  with_items: "{{ nodes }}"
+  register: containers_configured
+
+- name: Create containers
+  lxc_container:
+    name: "{{hostvars[item.item].ansible_fqdn}}"
+    container_log: true
+    template: ubuntu
+    state: started
+    template_options: --release xenial
+    container_command: |
+      cat <<EOF > /etc/network/interfaces
+      auto lo
+      iface lo inet loopback
+
+      auto eth0
+      iface eth0 inet dhcp
+      iface eth0 inet6 static
+        address {{hostvars[item.item].ansible_host}}
+        netmask 112
+        gateway {{ipv6_bridge_address}}
+      EOF
+      ifdown eth0
+      ifup eth0
+      sleep 1
+      apt-get update
+      apt-get -y install openssh-server python3 apt-transport-https lsb-release ca-certificates wget socat git npm
+      mkdir /root/.ssh
+      echo '{{ssh_public_key}}' > /root/.ssh/authorized_keys
+  loop: "{{containers_configured.results}}"
+  when: item.stat.exists == False
+
+- name: Create container's configuration check file
+  file:
+    state: touch
+    path: /var/lib/lxc/{{hostvars[item.item].ansible_fqdn}}/.configured
+  loop: "{{containers_configured.results}}"
+  when: item.stat.exists == False
+
+- name: Configure autostart for containers
+  lineinfile:
+    path: "/var/lib/lxc/{{hostvars[item.item].ansible_fqdn}}/config"
+    regexp: '^lxc.start.auto ='
+    line: 'lxc.start.auto = 1'
+  loop: "{{containers_configured.results}}"
+
+- name: Configure start delay for containers
+  lineinfile:
+    path: "/var/lib/lxc/{{hostvars[item.item].ansible_fqdn}}/config"
+    line: 'lxc.start.delay = 25'
+  loop: "{{containers_configured.results}}"

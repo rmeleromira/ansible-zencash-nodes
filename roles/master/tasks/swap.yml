@@ -1,0 +1,17 @@
+---
+- name: Create swap space
+  command: fallocate -l {{swap_size_gb}}G /extraswap
+  when: ansible_swaptotal_mb < 1
+  register: swap_add
+
+- name: Make swap
+  command: mkswap /extraswap
+  when: ansible_swaptotal_mb < 1
+
+- name: Add to fstab
+  action: lineinfile dest=/etc/fstab regexp="extraswap" line="/extraswap none swap sw 0 0" state=present
+  when: swap_add.changed or ansible_swaptotal_mb < 1
+
+- name: Turn swap on
+  command: swapon -a
+  when: swap_add.changed and ansible_swaptotal_mb < 1

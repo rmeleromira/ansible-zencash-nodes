@@ -4,15 +4,7 @@
   roles:
   - ansible-hardening
   - master
-#- hosts: supernodes
-#  tags: nodes
-#  roles:
-#  - nodes
-- hosts: nodes
+- hosts: securenodes,supernodes
   tags: nodes
   roles:
   - nodes
-- hosts: monitoring
-  tags: monitoring
-  roles:
-  - monitoring

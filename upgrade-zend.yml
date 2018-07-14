@@ -1,5 +1,5 @@
 ---
-- hosts: nodes
+- hosts: securenodes,supernodes
   tasks:
     - name: Update zen packages
       apt:
@@ -12,8 +12,8 @@
         name: zend
         state: restarted
       when: package.changed
-    - name: Restart secnodetracker service
+    - name: Restart nodetracker service
       systemd:
-        name: secnodetracker
+        name: nodetracker
         state: restarted
       when: package.changed

@@ -1,0 +1,26 @@
+---
+- name: Disable root login
+  lineinfile:
+    line: PermitRootLogin yes
+    state: absent
+    path: /etc/ssh/sshd_config
+  register: ssh_settings_root
+
+- name: Disable root login
+  lineinfile:
+    line: PermitRootLogin yes
+    state: absent
+    path: /etc/ssh/sshd_config
+  register: ssh_settings_root
+
+- name: Disable password auth
+  lineinfile:
+    line: PasswordAuthentication no
+    path: /etc/ssh/sshd_config
+  register: ssh_settings_password
+
+- name: Restart ssh server
+  systemd:
+    name: ssh
+    state: restarted
+  when: ssh_settings_root.changed or ssh_settings_password.changed

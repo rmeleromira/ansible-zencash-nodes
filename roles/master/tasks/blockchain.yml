@@ -1,0 +1,14 @@
+---
+- name: Create zen folder
+  file:
+    path: /var/lib/lxc/{{hostvars[item.item].ansible_fqdn}}/rootfs/home/zend/.zen/
+    state: directory
+  loop: "{{containers_configured.results}}"
+  when: item.stat.exists == False
+
+- name: Copy blockchain blocks
+  shell: cp -r * /var/lib/lxc/{{hostvars[item.item].ansible_fqdn}}/rootfs/home/zend/.zen
+  args:
+    chdir: "{{blocks_directory}}"
+  loop: "{{containers_configured.results}}"
+  when: item.stat.exists == False and blocks_directory is defined

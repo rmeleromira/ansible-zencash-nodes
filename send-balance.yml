@@ -1,0 +1,9 @@
+---
+- hosts: master
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Start secure node ssh servers
+      shell: lxc-attach -n {{hostvars[item].ansible_fqdn}} -- zen-cli 
+      with_items: "{{ groups['nodes'] }}"
+      when: groups['nodes'] is defined

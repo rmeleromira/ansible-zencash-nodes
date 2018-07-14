@@ -1,0 +1,93 @@
+---
+# nodeid
+- name: Check for config file
+  stat:
+    path: /home/zend/nodetracker/config/config.json
+  register: config_file
+
+- name: Gather nodeid
+  shell: cat /home/zend/nodetracker/config/config.json | python -c 'import json,sys; data=json.load(sys.stdin); print data["{{node_type}}"]["nodeid"]'
+  register: nodeid_from_config
+  when: config_file.stat.exists == True
+
+- name: Set nodeid
+  set_fact:
+    nodeid: "{{ nodeid_from_config.stdout }}"
+  when: config_file.stat.exists == True
+
+- name: Set nodeid
+  set_fact:
+    nodeid: "null"
+  when: config_file.stat.exists == False
+
+# home
+- name: Gather home
+  shell: cat /home/zend/nodetracker/config/config.json | python -c 'import json,sys; data=json.load(sys.stdin); print data["{{node_type}}"]["home"]'
+  register: home_from_config
+  when: config_file.stat.exists == True
+
+- name: Set home
+  set_fact:
+    home: "{{ home_from_config.stdout }}"
+  when: config_file.stat.exists == True
+
+- name: Set home
+  set_fact:
+    home: "{{tracker_prefix}}{{ ['1','2','3','4'] | random(seed=ansible_fqdn) }}.{{tracker_region}}"
+  when: config_file.stat.exists == False
+
+# username
+- name: Check for previously generated username
+  stat:
+    path: /home/zend/.zen/.username
+  register: username_exists
+
+- name: Generate username
+  set_fact:
+    username: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
+  when: username_exists.stat.exists == False
+
+- name: Create username check file
+  copy:
+    dest: /home/zend/.zen/.username
+    content: "{{username}}"
+  when: username_exists.stat.exists == False
+
+- name: Gather username
+  slurp:
+    src: /home/zend/.zen/.username
+  register: generated_username
+  when: username_exists.stat.exists == True
+
+- name: Set username
+  set_fact:
+    username: "{{ generated_username.content | b64decode }}"
+  when: username_exists.stat.exists == True
+
+# password
+- name: Check for previously generated password
+  stat:
+    path: /home/zend/.zen/.password
+  register: password_exists
+
+- name: Generate password
+  set_fact:
+    password: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
+  when: password_exists.stat.exists == False
+
+- name: Create password check file
+  copy:
+    dest: /home/zend/.zen/.password
+    content: "{{password}}"
+  when: password_exists.stat.exists == False
+
+- name: Gather password
+  slurp:
+    src: /home/zend/.zen/.password
+  register: generated_password
+  when: username_exists.stat.exists == True
+
+- name: Set password
+  set_fact:
+    password: "{{ generated_password.content | b64decode }}"
+  when: password_exists.stat.exists == True

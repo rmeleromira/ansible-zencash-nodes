@@ -1,0 +1,44 @@
+---
+- name: Set forwarding policy to accept on ufw
+  lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY='
+    line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+
+- name: Add ipv4 forwarding rules for supernodes
+  blockinfile:
+    path: /etc/ufw/before.rules
+    block: |
+      *nat
+      :PREROUTING ACCEPT [0:0]
+      {% for supernode in groups['supernodes'] %}
+      -A PREROUTING -i {{ipv6_interface}} -d {{hostvars[supernode].public_ipv4_address}} -p tcp --dport 9033 -j DNAT --to-destination {{hostvars[supernode].private_ipv4_address}}:9033
+      {% endfor %}
+      -A POSTROUTING -s 10.0.3.0/24 ! -d 10.0.3.0/24 -j MASQUERADE
+      COMMIT
+  register: ufw_forward_added
+  when: groups['supernodes'] is defined
+
+- name: Allow ssh access
+  ufw:
+    rule: allow
+    port: 22
+
+- name: Allow access to rsyslog from container's network
+  ufw:
+    rule: allow
+    from: "{{ipv6_bridge_address}}/112"
+
+- name: Enable ufw logging
+  ufw:
+    logging: on
+
+- name: Start and enable ufw and load rules
+  ufw:
+    state: enabled
+
+- name: Restart ufw
+  systemd:
+    name: ufw
+    state: restarted
+  when: ufw_forward_added.changed

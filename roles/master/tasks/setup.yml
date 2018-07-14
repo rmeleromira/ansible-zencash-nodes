@@ -1,0 +1,75 @@
+---
+- name: Set hostname to {{global_domain}}
+  hostname:
+    name: "{{global_domain}}"
+
+- name: Add nodes-command and bash-completion
+  blockinfile:
+    block: |
+      nodes-command () {
+        for i in `lxc-ls | sort`; do
+          echo -e "\033[0;31mContainer:$i\033[0m";lxc-attach -n $i -- $1;
+        done
+      }
+      if ! shopt -oq posix; then
+        if [ -f /usr/share/bash-completion/bash_completion ]; then
+          . /usr/share/bash-completion/bash_completion
+        elif [ -f /etc/bash_completion ]; then
+          . /etc/bash_completion
+        fi
+      fi
+    path: /etc/bash.bashrc
+
+- name: Configure sysctl
+  sysctl:
+    name: "{{item.name}}"
+    value: "{{item.value}}"
+    state: present
+  with_items:
+  - { name: vm.swappiness, value: 10 }
+  - { name: net.ipv6.conf.all.proxy_ndp, value: 1 }
+  - { name: net.ipv6.conf.all.forwarding, value: 1 }
+  - { name: net.ipv6.conf.default.forwarding, value: 1 }
+  - { name: net.ipv6.conf.default.proxy_ndp, value: 1 }
+  - { name: fs.inotify.max_queued_events, value: 1048576 }
+  - { name: fs.inotify.max_user_instances, value: 1048576 }
+  - { name: fs.inotify.max_user_watches, value: 1048576 }
+  - { name: vm.max_map_count, value: 262144 }
+  - { name: kernel.dmesg_restrict, value: 1 }
+  - { name: kernel.unprivileged_userns_clone, value: 1 }
+
+- name: Download prerequisites
+  apt:
+    name: lxc,python-lxc,ufw,fail2ban,libpam-cgroup,libpam-cgfs,bridge-utils,acl,bash-completion
+    state: present
+    update_cache: yes
+
+- name: Start and enable fail2ban
+  systemd:
+    name: fail2ban
+    state: started
+    enabled: yes
+
+- name: Start and enable apparmor
+  systemd:
+    name: apparmor
+    state: started
+    enabled: true
+
+- name: Add additional ipv4 addresses to {{ipv6_interface}}
+  tags: test
+  blockinfile:
+    path: /etc/network/interfaces
+    insertafter: ".*dns-nameservers"
+    block: |
+      {% for supernode in groups['supernodes'] %}
+      {% if loop.index != 1 %}
+          up ip address add {{hostvars[supernode].public_ipv4_address}}/{{hostvars[supernode].public_ipv4_netmask}} dev {{ipv6_interface}}
+      {% endif %}
+      {% endfor %}
+  register: interfaces
+  when: groups['supernodes'] is defined
+
+- name: Restart interfaces
+  shell: "systemctl restart networking; rc=$?; sleep 3; exit $rc"
+  when: interfaces.changed
