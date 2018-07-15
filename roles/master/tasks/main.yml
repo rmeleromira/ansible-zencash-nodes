@@ -3,10 +3,10 @@
   tags: swap
 - include_tasks: setup.yml
   tags: setup
-- include_tasks: lxcbr0.yml
-  tags: lxcbr0
 - include_tasks: ufw.yml
   tags: ufw
+- include_tasks: lxcbr0.yml
+  tags: lxcbr0
 - include_tasks: ssh.yml
   tags: ssh
 - include_tasks: rsyslog.yml
