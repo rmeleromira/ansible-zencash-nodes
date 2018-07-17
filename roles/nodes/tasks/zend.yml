@@ -51,7 +51,8 @@
     daemon_reload: yes
     name: zend
     enabled: yes
-    state: started
+    state: restarted
+  when: zen_conf.changed
 
 - name: Create .zen folder for root
   file:
