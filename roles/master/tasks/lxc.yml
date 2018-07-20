@@ -60,6 +60,9 @@
 
       auto eth0
       iface eth0 inet dhcp
+      {% if 'super' in node_type %}
+        up ip a add {{hostvars[item.item].public_ipv4_address}}/32 dev eth0
+      {% endif %}
       iface eth0 inet6 static
         address {{hostvars[item.item].ansible_host}}
         netmask 112

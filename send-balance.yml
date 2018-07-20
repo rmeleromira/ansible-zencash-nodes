@@ -1,9 +1,15 @@
 ---
-- hosts: master
+- hosts: securenodes,supernodes
   gather_facts: false
   become: true
+  vars:
+    destination_address:
   tasks:
-    - name: Start secure node ssh servers
-      shell: lxc-attach -n {{hostvars[item].ansible_fqdn}} -- zen-cli 
-      with_items: "{{ groups['nodes'] }}"
-      when: groups['nodes'] is defined
+    - name: Gather balance to send
+      shell: zen-cli z_gettotalbalance | python -c 'import json,sys; print float(json.load(sys.stdin).values()[2])-0.0001'
+      register: balance
+    - name: Gather address to send
+      shell: zen-cli z_listaddresses | python -c 'import json,sys; print json.load(sys.stdin)[0]'
+      register: address
+    - name: Send balance
+      shell: 'zen-cli z_sendmany "{{address.stdout}}" [{\"address\":\"{{destination_address}}\",\"amount\":\"{{balance.stdout}}\"}]'

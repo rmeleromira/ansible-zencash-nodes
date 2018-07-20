@@ -14,9 +14,11 @@ all:
       vars:
         ansible_become_pass: "super_secret_password"
         ansible_user: "your_user"
+        ansible_become: true
+        ansible_python_interpreter: /usr/bin/python3
       hosts:
         master01:
-          ansible_host: "your-nodes-address.com"
+          ansible_host: your-nodes-address.com
     supernodes:
       vars:
         ansible_user: root
@@ -128,24 +130,6 @@ all:
         # secnode12:
         #   ansible_fqdn: "{{secure_nodes_prefix}}12.{{global_domain}}"
         #   ansible_host: "{{ipv6_subnet}}32"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode13:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}13.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}33"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode14:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}14.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}34"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode15:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}15.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}35"
         #   stake_address:
         #   tracker_email: "{{global_tracker_email}}"
         #   category: "{{secure_category}}"

@@ -68,13 +68,13 @@
       {% endif %}
       {% endfor %}
   register: interfaces
-  when: groups['supernodes'] is defined
+  when: groups['supernodes'] is defined and groups['supernodes'] | length > 1
 
 - name: Add ips to in memory interfaces
   shell: |
     {% for supernode in groups['supernodes'] | sort %}
-    {% if 'supnode01' not in supernode %}
+    {% if 'supnode01' not in supernode and hostvars[supernode].public_ipv4_address not in ansible_all_ipv4_addresses %}
       ip a add {{hostvars[supernode].public_ipv4_address}}/{{hostvars[supernode].public_ipv4_netmask}} dev {{ipv6_interface}};
     {% endif %}
     {% endfor %}
-  when: interfaces.changed
+  when: interfaces.changed and groups['supernodes'] | length > 1
