@@ -60,7 +60,7 @@
 
       auto eth0
       iface eth0 inet dhcp
-      {% if 'super' in node_type %}
+      {% if 'super' in hostvars[item.item].node_type %}
         up ip a add {{hostvars[item.item].public_ipv4_address}}/32 dev eth0
       {% endif %}
       iface eth0 inet6 static
