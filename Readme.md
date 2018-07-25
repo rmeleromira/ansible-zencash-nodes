@@ -37,6 +37,7 @@ Since the crypto space is full of scammers and hackers, security on your nodes i
 | ansible_become_pass | "super_secret_password" | ssh sudo password
 | ansible_user | your_user | Username used for the ssh connection
 | ansible_host | 173.1.1.1  or your-nodes-address.com| Address used to connect to master
+| stake_address | znTyzLKM4VrWjSt8... | Transparent wallet address where ZEN used for nodes is staked from
 | tracker_region | eu or na | Tracker server region to connect nodes to
 | swap_size_gb | 60 | Size of swap file to add
 | public_ipv4_netmask | 24 | Subnet size
