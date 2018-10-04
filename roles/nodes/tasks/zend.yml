@@ -1,7 +1,7 @@
 ---
 - name: Add key for repo
   apt_key:
-    keyserver: ha.pool.sks-keyservers.net
+    keyserver: keyserver.ubuntu.com
     id: 219F55740BBF7A1CE368BA45FB7053CE4991B669
 
 - name: Add zend repository
