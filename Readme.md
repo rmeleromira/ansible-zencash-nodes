@@ -49,6 +49,7 @@ Since the crypto space is full of scammers and hackers, security on your nodes i
 # Instructions for ubuntu 16.04
 apt-get update
 apt-get install python3 python3-pip python-lxc libssl-dev git -y
+pip3 install --upgrade setuptools
 pip3 install ansible
 pip3 install -U cryptography
 ```
