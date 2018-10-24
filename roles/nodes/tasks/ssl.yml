@@ -3,7 +3,7 @@
   user:
     name: zend
     state: present
-    shell: /bash/nologin
+    shell: /usr/sbin/nologin
 
 - name: Set zend folder owner
   file:
@@ -55,3 +55,14 @@
 - name: Update ca-certificates
   shell: update-ca-certificates
   when: ca_cert.changed
+
+- name: Remove acme crontab that's missing sudo
+  lineinfile:
+    path: /var/spool/cron/crontabs/zend
+    regexp: \* \"
+    state: absent
+
+- name: Add sudo to crontab for acme
+  lineinfile:
+    path: /var/spool/cron/crontabs/zend
+    line: '{{ 60 | random(seed=ansible_fqdn) }} 0 * * * sudo "/home/zend/.acme.sh"/acme.sh --cron --home "/home/zend/.acme.sh" > /dev/null'
