@@ -33,7 +33,7 @@
 - name: Allow acme.sh sudo
   lineinfile:
     path: "/etc/sudoers"
-    line: 'zend ALL=(ALL) NOPASSWD: /home/zend/.acme.sh/acme.sh'
+    line: 'zend ALL=(ALL) NOPASSWD: /home/zend/.acme.sh/acme.sh,/bin/systemctl restart zend'
 
 - name: Check for certificate
   stat:
@@ -42,7 +42,7 @@
 
 - name: Get SSL certificate
   become_user: zend
-  shell: "sudo /home/zend/.acme.sh/acme.sh --issue --standalone -d {{ansible_fqdn}} --listen-v6"
+  shell: "sudo /home/zend/.acme.sh/acme.sh --issue --standalone -d {{ansible_fqdn}} --listen-v6 --renew-hook 'sudo /bin/systemctl restart zend'"
   when: certificate_exists.stat.exists == False
 
 - name: Copy ca.crt
