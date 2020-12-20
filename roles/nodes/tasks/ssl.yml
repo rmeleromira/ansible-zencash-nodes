@@ -61,7 +61,7 @@
   register: fullchain_cert
 
 - name: Update ca-certificates
-  shell: update-ca-certificates
+  shell: "update-ca-certificates --fresh"
   when: ca_cert.changed or fullchain_cert.changed
 
 - name: Remove acme crontab that's missing sudo
