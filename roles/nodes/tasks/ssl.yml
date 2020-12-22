@@ -17,18 +17,17 @@
     repo: https://github.com/Neilpang/acme.sh.git
     dest: /home/zend/acme.sh
     version: master
-
-- name: Check for acme.sh
-  stat:
-    path: /home/zend/.acme.sh
-  register: acme_exists
+  register: acmesh
 
 - name: Install acme.sh
   become_user: zend
   shell: /home/zend/acme.sh/acme.sh --install
   args:
-    chdir: /home/zend/acme.sh
-  when: acme_exists.stat.exists == False
+    chdir: /home/zend/acme.sh  
+  when: acmesh.changed
+  # must re-install acme.sh if we checkout a new release
+  # resolves a breaking problem related to a hanging issued fixed in
+  # https://github.com/acmesh-official/acme.sh/releases/tag/2.8.3
 
 - name: Allow acme.sh sudo
   lineinfile:
@@ -52,9 +51,18 @@
     remote_src: yes
   register: ca_cert
 
+# support new LE intermediates as of sept 2020
+# https://letsencrypt.org/2020/09/17/new-root-and-intermediates.html
+- name: Copy fullchain.crt
+  copy:
+    src: /home/zend/.acme.sh/{{ansible_fqdn}}/fullchain.cer
+    dest: /usr/local/share/ca-certificates/fullchain.crt
+    remote_src: yes
+  register: fullchain_cert
+
 - name: Update ca-certificates
-  shell: update-ca-certificates
-  when: ca_cert.changed
+  shell: "update-ca-certificates --fresh"
+  when: ca_cert.changed or fullchain_cert.changed
 
 - name: Remove acme crontab that's missing sudo
   lineinfile:
