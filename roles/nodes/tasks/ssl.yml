@@ -41,7 +41,7 @@
 
 - name: Get SSL certificate
   become_user: zend
-  shell: "sudo /home/zend/.acme.sh/acme.sh --issue --standalone -d {{ansible_fqdn}} --listen-v6 --renew-hook 'sudo /bin/systemctl restart zend'"
+  shell: "sudo /home/zend/.acme.sh/acme.sh --issue --standalone -d {{ansible_fqdn}} --listen-v6 --reloadcmd 'sudo /bin/systemctl restart zend'"
   when: certificate_exists.stat.exists == False
 
 - name: Copy ca.crt
