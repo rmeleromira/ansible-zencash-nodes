@@ -1,6 +1,6 @@
 ---
-- include_tasks: swap.yml
-  tags: swap
+#- include_tasks: swap.yml
+#  tags: swap
 - include_tasks: setup.yml
   tags: setup
 - include_tasks: ufw.yml

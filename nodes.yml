@@ -2,7 +2,7 @@
 - hosts: master
   tags: master
   roles:
-  - ansible-hardening
+  #- ansible-hardening
   - master
 - hosts: securenodes,supernodes
   tags: nodes

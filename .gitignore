@@ -7,3 +7,5 @@
 roles/nodes/._.DS_Store
 
 docs/private.md
+docs/inventory-private.yml
+inventory.yml
