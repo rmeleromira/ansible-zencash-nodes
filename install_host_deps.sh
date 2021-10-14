@@ -1,0 +1,8 @@
+#!/bin/bash
+set -x
+
+sudo apt update
+sudo apt install python3 python3-pip python-lxc libssl-dev git -y
+pip3 install --upgrade setuptools
+pip3 install ansible
+pip3 install -U cryptography
