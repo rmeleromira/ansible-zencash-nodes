@@ -44,11 +44,11 @@
     state: present
     update_cache: yes
 
-- name: Start and enable apparmor
-  systemd:
-    name: apparmor
-    state: started
-    enabled: true
+#- name: Start and enable apparmor
+#  systemd:
+#    name: apparmor
+#    state: started
+#    enabled: true
 
 - name: Add additional ipv4 addresses to {{ipv6_interface}}
   tags: test
