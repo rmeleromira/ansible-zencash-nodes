@@ -1,2 +1,9 @@
 *.retry
 *.code-workspace
+
+*._.DS_Store
+*.DS_Store
+
+roles/nodes/._.DS_Store
+
+docs/private.md
