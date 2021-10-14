@@ -40,15 +40,9 @@
 
 - name: Download prerequisites
   apt:
-    name: lxc,python-lxc,ufw,fail2ban,libpam-cgroup,libpam-cgfs,bridge-utils,acl,bash-completion
+    name: lxc,python3-lxc,ufw,libpam-cgroup,libpam-cgfs,bridge-utils,acl,bash-completion
     state: present
     update_cache: yes
-
-- name: Start and enable fail2ban
-  systemd:
-    name: fail2ban
-    state: started
-    enabled: yes
 
 - name: Start and enable apparmor
   systemd:
