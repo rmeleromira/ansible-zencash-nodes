@@ -19,7 +19,7 @@
   ],
   "stakeaddr": "{{stake_address}}",
   "email": "{{tracker_email}}",
-  "fqdn": "{{ansible_fqdn}}",
+  "fqdn": "{{container_fqdn}}",
   "ipv": "6",
   "region": "{{tracker_region}}",
   "home": "{{home}}",

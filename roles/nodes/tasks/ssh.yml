@@ -2,4 +2,5 @@
 - name: Disable ssh server
   systemd:
     name: ssh
-    enabled: false
+    #enabled: false
+    enabled: true   # remember to disable for production
