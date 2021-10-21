@@ -29,12 +29,20 @@
   # resolves a breaking problem related to a hanging issued fixed in
   # https://github.com/acmesh-official/acme.sh/releases/tag/2.8.3
 
-- name: Register acme.sh account
-  become_user: zend
-  shell: "/home/zend/.acme.sh/acme.sh --register-account -m {{global_tracker_email}}"
-  args:
-    chdir: /home/zend/.acme.sh  
-  when: acmesh.changed
+#- name: Register acme.sh account
+#  become_user: zend
+#  shell: /home/zend/.acme.sh/acme.sh --register-account -m {{global_tracker_email}}
+#  args:
+#    chdir: /home/zend/acme.sh  
+#  when: acmesh.changed
+
+- name: Configure acme.sh account
+  template:
+    src: account.conf
+    dest: "/home/zend/.acme.sh/account.conf"
+    owner: zend
+    group: zend
+  register: acme_sh_account_configured
 
 - name: Allow acme.sh sudo
   lineinfile:
@@ -48,7 +56,8 @@
 
 - name: Get SSL certificate
   become_user: zend
-  shell: "sudo /home/zend/.acme.sh/acme.sh --issue --standalone -d {{ container_fqdn }} --listen-v6 --reloadcmd 'sudo /bin/systemctl restart zend'"
+  shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --reloadcmd 'sudo /bin/systemctl restart zend'"
+  # remove --staging for prod use
   when: certificate_exists.stat.exists == False
 
 - name: Copy ca.crt
@@ -71,13 +80,9 @@
   shell: "update-ca-certificates --fresh"
   when: ca_cert.changed or fullchain_cert.changed
 
-- name: Remove acme crontab that's missing sudo
+- name: Add cert renewal to crontab for zend user
   lineinfile:
     path: /var/spool/cron/crontabs/zend
-    regexp: \* \"
-    state: absent
+    line: '{{ 60 | random(seed=container_fqdn) }} 0 * * * /home/zend/.acme.sh/acme.sh --cron --home /home/zend/.acme.sh --renew-hook "sudo /bin/systemctl restart zend"'
 
-- name: Add sudo to crontab for acme
-  lineinfile:
-    path: /var/spool/cron/crontabs/zend
-    line: '{{ 60 | random(seed=container_fqdn) }} 0 * * * sudo "/home/zend/.acme.sh/acme.sh" --cron --home "/home/zend/.acme.sh" --renew-hook "sudo /bin/systemctl restart zend"'
+
