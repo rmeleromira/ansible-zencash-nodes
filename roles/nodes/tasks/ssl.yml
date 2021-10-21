@@ -29,6 +29,13 @@
   # resolves a breaking problem related to a hanging issued fixed in
   # https://github.com/acmesh-official/acme.sh/releases/tag/2.8.3
 
+- name: Register acme.sh account
+  become_user: zend
+  shell: /home/zend/.acme.sh/acme.sh --register-account -m {{global_tracker_email}}
+  args:
+    chdir: /home/zend/acme.sh  
+  when: acmesh.changed
+
 - name: Allow acme.sh sudo
   lineinfile:
     path: "/etc/sudoers"

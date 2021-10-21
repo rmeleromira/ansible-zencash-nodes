@@ -6,7 +6,7 @@
 
 - name: Add zend repository
   apt_repository:
-    repo: deb https://HorizenOfficial.github.io/repo/ xenial main
+    repo: deb https://HorizenOfficial.github.io/repo/ focal main
     state: present
 
 - name: Install zend package

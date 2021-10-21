@@ -68,11 +68,14 @@
         netmask 112
         gateway {{ipv6_bridge_address}}
       EOF
+      echo "127.0.0.1 {{hostvars[item.item].ansible_fqdn}}" >> /etc/hosts
       ifdown eth0
       ifup eth0
       sleep 1
       apt-get update
-      apt-get -y install openssh-server python3 apt-transport-https lsb-release ca-certificates wget socat git npm
+      apt-get -y install openssh-server python3 apt-transport-https lsb-release ca-certificates wget socat git npm sudo cron
+      # debug packages do not install in prod
+      apt install -y iputils-ping dnsutils
       mkdir /root/.ssh
       echo '{{ssh_public_key}}' > /root/.ssh/authorized_keys
   loop: "{{containers_configured.results}}"
