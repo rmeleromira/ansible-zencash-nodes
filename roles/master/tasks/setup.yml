@@ -1,7 +1,7 @@
 ---
-- name: Set hostname to {{global_domain}}
+- name: Set hostname to controller.{{global_domain}}
   hostname:
-    name: "{{global_domain}}"
+    name: "controller.{{global_domain}}"
 
 - name: Add nodes-command and bash-completion
   blockinfile:
@@ -44,11 +44,11 @@
     state: present
     update_cache: yes
 
-#- name: Start and enable apparmor
-#  systemd:
-#    name: apparmor
-#    state: started
-#    enabled: true
+- name: Start and enable apparmor
+  systemd:
+    name: apparmor
+    state: started
+    enabled: true
 
 - name: Add additional ipv4 addresses to {{ipv6_interface}}
   tags: test
@@ -72,3 +72,14 @@
     {% endif %}
     {% endfor %}
   when: interfaces.changed and groups['supernodes'] | length > 1
+
+- name: Add enable ra to {{ipv6_interface}} to pickup default ipv6 route
+  tags: test
+  blockinfile:
+    path: /etc/network/interfaces
+    insertafter: "iface {{ipv6_interface}}" inet dhcp
+    block: |
+      iface {{ipv6_interface}} inet6 auto
+      accept_ra 2
+  register: ipv6_ra
+  when: groups['securenodes'] is defined and groups['securenodes'] | length > 1
