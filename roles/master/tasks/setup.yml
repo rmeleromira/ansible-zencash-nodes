@@ -31,6 +31,7 @@
   - { name: net.ipv6.conf.all.forwarding, value: 1 }
   - { name: net.ipv6.conf.default.forwarding, value: 1 }
   - { name: net.ipv6.conf.default.proxy_ndp, value: 1 }
+  - { name: "net.ipv6.conf.{{ipv6_interface}}.accept_ra", value: 2 }
   - { name: fs.inotify.max_queued_events, value: 1048576 }
   - { name: fs.inotify.max_user_instances, value: 1048576 }
   - { name: fs.inotify.max_user_watches, value: 1048576 }
@@ -72,14 +73,3 @@
     {% endif %}
     {% endfor %}
   when: interfaces.changed and groups['supernodes'] | length > 1
-
-- name: Add enable ra to {{ipv6_interface}} to pickup default ipv6 route
-  tags: test
-  blockinfile:
-    path: /etc/network/interfaces
-    insertafter: "iface {{ipv6_interface}}" inet dhcp
-    block: |
-      iface {{ipv6_interface}} inet6 auto
-      accept_ra 2
-  register: ipv6_ra
-  when: groups['securenodes'] is defined and groups['securenodes'] | length > 1
