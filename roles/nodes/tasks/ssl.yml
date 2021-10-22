@@ -51,6 +51,9 @@
   shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
   when: certificate_exists.stat.exists == False
 
+# need to split up the cert chain
+# eg `csplit -k -f mycert ../fullchain.cer '/END CERTIFICATE/+1' {*}`
+
 - name: Copy ca.crt
   copy:
     src: /home/zend/.acme.sh/{{container_fqdn}}/ca.cer
