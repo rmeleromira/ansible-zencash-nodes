@@ -25,16 +25,6 @@
   args:
     chdir: /home/zend/acme.sh  
   when: acmesh.changed
-  # must re-install acme.sh if we checkout a new release
-  # resolves a breaking problem related to a hanging issued fixed in
-  # https://github.com/acmesh-official/acme.sh/releases/tag/2.8.3
-
-#- name: Register acme.sh account
-#  become_user: zend
-#  shell: /home/zend/.acme.sh/acme.sh --register-account -m {{global_tracker_email}}
-#  args:
-#    chdir: /home/zend/acme.sh  
-#  when: acmesh.changed
 
 - name: Configure acme.sh account
   template:
@@ -56,29 +46,42 @@
 
 - name: Get SSL certificate
   become_user: zend
-  shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
+  #shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
   # remove --staging for prod use
+  shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
   when: certificate_exists.stat.exists == False
 
 - name: Copy ca.crt
   copy:
     src: /home/zend/.acme.sh/{{container_fqdn}}/ca.cer
-    dest: /usr/local/share/ca-certificates/ca.crt
+    dest: /usr/local/share/ca-certificates/zerossl.crt
     remote_src: yes
   register: ca_cert
 
 # support new LE intermediates as of sept 2020
 # https://letsencrypt.org/2020/09/17/new-root-and-intermediates.html
-- name: Copy fullchain.crt
-  copy:
-    src: /home/zend/.acme.sh/{{container_fqdn}}/fullchain.cer
-    dest: /usr/local/share/ca-certificates/fullchain.crt
-    remote_src: yes
-  register: fullchain_cert
+#- name: Copy fullchain.crt
+#  copy:
+#    src: /home/zend/.acme.sh/{{container_fqdn}}/fullchain.cer
+#    dest: /usr/local/share/ca-certificates/fullchain.crt
+#    remote_src: yes
+#  register: fullchain_cert
+
+#- name: Copy LE R3 intermediate cert
+#  copy:
+#    src: New_LE_Int_R3.crt
+#    dest: /usr/local/share/ca-certificates/New_LE_Int_R3.crt
+#    owner: root
+#    group: root
+#  register: le_r3_intermediate
+
+#- name: Update ca-certificates
+#  shell: "update-ca-certificates --fresh"
+#  when: ca_cert.changed or fullchain_cert.changed or le_r3_intermediate.changed
 
 - name: Update ca-certificates
   shell: "update-ca-certificates --fresh"
-  when: ca_cert.changed or fullchain_cert.changed
+  when: ca_cert.changed
 
 - name: Remove default acme crontab that does not handle zend restart
   lineinfile:
