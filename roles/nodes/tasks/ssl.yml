@@ -37,30 +37,29 @@
 - name: Allow acme.sh sudo
   lineinfile:
     path: "/etc/sudoers"
-    line: 'zend ALL=(ALL) NOPASSWD: /home/zend/.acme.sh/acme.sh,/bin/systemctl restart zend'
+    line: 'zend ALL=(ALL) NOPASSWD: /home/zend/.acme.sh/acme.sh,/bin/systemctl restart zend,/home/zend/.acme.sh/renew_hook.sh'
 
 - name: Check for certificate
   stat:
     path: "/home/zend/.acme.sh/{{container_fqdn}}/{{container_fqdn}}.cer"
   register: certificate_exists
-  #debug:
-  #  var: certificate_exists
 
 - name: Get SSL certificate
   become_user: zend
-  #shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
+  ### staging CA [use for testing]
+  #shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
   # remove --staging for prod use
-  #shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
-  shell: "/home/zend/.acme.sh/acme.sh --server letsencrypt --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
+  ###
+  ### 
+  ### letsencrypt CA
+  #shell: "/home/zend/.acme.sh/acme.sh --server letsencrypt --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  ###
+  ### zerossl CA (acme default)
+  shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
   when: certificate_exists.stat.exists == False
-  register: issue_le_cert
-
-# need to split up the cert chain
-# eg `csplit -k -f mycert ../fullchain.cer '/END CERTIFICATE/+1' {*}`
 
 - name: Parse intermediate cert from fullchain
   shell: cat /home/zend/.acme.sh/{{container_fqdn}}/fullchain.cer | awk 'split_after==1{n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1} {print > "/usr/local/share/ca-certificates/le-intermediate-cert" n ".crt"}'
-  #when: issue_le_cert.rc == 0
   register: intermediate_cert_parsed
 
 - name: Copy ca.crt
@@ -69,19 +68,6 @@
     dest: /usr/local/share/ca-certificates/acme_ca.cer
     remote_src: yes
   register: ca_cert
-
-#- name: Copy LE R3 intermediate cert
-#  copy:
-#    src: New_LE_Int_R3.crt
-#    dest: /usr/local/share/ca-certificates/New_LE_Int_R3.crt
-#    remote_src: yes
-#    owner: root
-#    group: root
-#  register: le_r3_intermediate
-
-#- name: Update ca-certificates
-#  shell: "update-ca-certificates --fresh"
-#  when: ca_cert.changed or le_r3_intermediate.changed
 
 - name: Update ca-certificates
   shell: "update-ca-certificates --fresh"
@@ -93,9 +79,16 @@
     regexp: \* \"
     state: absent
 
+
+- name: Create renew_hook.sh from template
+  template:
+    src: renew_hook.sh
+    dest: "/home/zend/.acme.sh/renew_hook.sh"
+    owner: root
+    group: root
+    mode: 0750
+  
 - name: Add cert renewal to crontab for zend user
   lineinfile:
     path: /var/spool/cron/crontabs/zend
-    line: '{{ 60 | random(seed=container_fqdn) }} 0 * * * /home/zend/.acme.sh/acme.sh --cron --home /home/zend/.acme.sh --renew-hook "sudo /bin/systemctl restart zend"'
-
-
+    line: '{{ 60 | random(seed=container_fqdn) }} 0 * * * /home/zend/.acme.sh/acme.sh --cron --home /home/zend/.acme.sh --renew-hook "sudo /home/zend/.acme.sh/renew_hook.sh"'
