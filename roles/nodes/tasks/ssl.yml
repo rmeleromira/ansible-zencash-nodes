@@ -48,7 +48,8 @@
   become_user: zend
   #shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
   # remove --staging for prod use
-  shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
+  #shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
+  shell: "/home/zend/.acme.sh/acme.sh --server letsencrypt --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /bin/systemctl restart zend'"
   when: certificate_exists.stat.exists == False
 
 # need to split up the cert chain
@@ -57,7 +58,7 @@
 - name: Copy ca.crt
   copy:
     src: /home/zend/.acme.sh/{{container_fqdn}}/ca.cer
-    dest: /usr/local/share/ca-certificates/zerossl.crt
+    dest: /usr/local/share/ca-certificates/acme_ca.cer
     remote_src: yes
   register: ca_cert
 
