@@ -29,7 +29,7 @@
     path: /home/zend/.zen/zen.conf
   register: zenconf_exists
 
-- name: Initial zend run
+- name: Initial zend run    # TODO: see if this is even necessary.  probably a better way to pull the parameters.
   shell: zend
   become_user: zend
   when: zenconf_exists.stat.exists == False

@@ -75,7 +75,7 @@
       apt-get update
       apt-get -y install openssh-server python3 apt-transport-https lsb-release ca-certificates wget socat git npm sudo cron rsyslog jq
       # debug packages do not install in prod
-      #apt install -y iputils-ping dnsutils
+      apt install -y iputils-ping dnsutils vim
       mkdir /root/.ssh
       echo '{{ssh_public_key}}' > /root/.ssh/authorized_keys
   loop: "{{containers_configured.results}}"

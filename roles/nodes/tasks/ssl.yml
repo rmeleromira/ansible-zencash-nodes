@@ -52,10 +52,10 @@
   ###
   ### 
   ### letsencrypt CA
-  #shell: "/home/zend/.acme.sh/acme.sh --server letsencrypt --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  shell: "/home/zend/.acme.sh/acme.sh --server letsencrypt --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
   ###
   ### zerossl CA (acme default)
-  shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  #shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
   when: certificate_exists.stat.exists == False
 
 - name: Parse intermediate cert from fullchain
