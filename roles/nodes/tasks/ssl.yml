@@ -81,7 +81,7 @@
 
 - name: Update ca-certificates
   shell: "update-ca-certificates --fresh"
-  when: ca_cert.changed or fullchain_cert.changed or le_r3_intermediate.changed
+  when: ca_cert.changed or le_r3_intermediate.changed
 
 #- name: Update ca-certificates
 #  shell: "update-ca-certificates --fresh"
