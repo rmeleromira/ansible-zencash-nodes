@@ -46,16 +46,17 @@
 
 - name: Get SSL certificate
   become_user: zend
-  ### staging CA [use for testing]
-  #shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  ### staging CA [use for testing to avoid rate limits]
+  shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
   # remove --staging for prod use
   ###
   ### 
-  ### letsencrypt CA
-  shell: "/home/zend/.acme.sh/acme.sh --server letsencrypt --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  ### letsencrypt CA (best, use this one)
+  #shell: "/home/zend/.acme.sh/acme.sh --server letsencrypt --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
   ###
-  ### zerossl CA (acme default)
+  ### zerossl CA (acme default, works but is flaky)
   #shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  ###
   when: certificate_exists.stat.exists == False
 
 - name: Parse intermediate cert from fullchain
@@ -92,3 +93,5 @@
   lineinfile:
     path: /var/spool/cron/crontabs/zend
     line: '{{ 60 | random(seed=container_fqdn) }} 0 * * * /home/zend/.acme.sh/acme.sh --cron --home /home/zend/.acme.sh --renew-hook "sudo /home/zend/.acme.sh/renew_hook.sh"'
+    # note that the renew-hook seems to be persisted somewhere in acme (and the hook from the -issue command is used despite what we specify here)
+

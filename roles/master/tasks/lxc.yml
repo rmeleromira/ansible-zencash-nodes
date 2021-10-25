@@ -53,6 +53,11 @@
     template: debian
     state: started
     template_options: --release bullseye
+    #container_config: lxc.mount.entry = "/root/.zcash-params home/zend/.zcash-params none bind,create=dir 0 0"
+    container_config: lxc.mount.entry = "/root/.zcash-params mnt none bind,create=dir 0 0"
+    # create=dir chokes, so we mount to /mnt, which exists when the container is created
+    # any other mount point fails, including absolute mount paths
+    # so we mount it to /mnt, and then symlink it into the zend user's $HOME in nodes/zend.yml
     container_command: |
       cat <<EOF > /etc/network/interfaces
       auto lo

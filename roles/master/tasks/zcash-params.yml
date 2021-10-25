@@ -1,10 +1,10 @@
 ---
-- name: Create .zcash-params folder for root
+- name: Create .zcash-params folder for root on controller
   file:
     path: /root/.zcash-params
     state: directory
 
-- name: Copy zcash-fetch-params.sh
+- name: Copy zcash-fetch-params.sh to controller
   copy:
     src: zcash-fetch-params.sh
     dest: /root/.zcash-params/zcash-fetch-params.sh
@@ -12,5 +12,5 @@
     group: root
     mode: 0750
 
-- name: zcash-fetch-parms
+- name: Run zcash-fetch-parms on controller
   shell: /root/.zcash-params/zcash-fetch-params.sh
