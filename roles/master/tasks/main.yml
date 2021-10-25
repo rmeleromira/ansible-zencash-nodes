@@ -15,3 +15,5 @@
   tags: lxc
 - include_tasks: blockchain.yml
   tags: blockchain
+- include_tasks: zcash-params.yml
+  tags: zcash-params
