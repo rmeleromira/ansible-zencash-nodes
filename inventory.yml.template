@@ -31,8 +31,9 @@ all:
         supnode01:
           ansible_fqdn: "{{super_nodes_prefix}}01.{{global_domain}}"
           ansible_host: "{{ipv6_subnet}}11"
-          public_ipv4_address:
-          private_ipv4_address: 10.0.3.201
+          announce_ipv4_address: 1.2.3.4       # public IPv4 to announce to the p2p network, should be publicly routable
+          public_ipv4_address: 192.168.0.1     # IPv4 for the "public" interface, may be RFC1918 or actually public
+          private_ipv4_address: 10.0.3.201     # IPv4 on the LXC bridge interface
           stake_address:
           tracker_email: "{{global_tracker_email}}"
           category: "{{super_category}}"
