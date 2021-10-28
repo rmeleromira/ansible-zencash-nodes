@@ -1,7 +1,7 @@
 ---
-- name: Set hostname to controller.{{global_domain}}
+- name: Set hostname to zen-controller.{{global_domain}}
   hostname:
-    name: "controller.{{global_domain}}"
+    name: "zen-controller.{{global_domain}}"
 
 - name: Add nodes-command and bash-completion
   blockinfile:

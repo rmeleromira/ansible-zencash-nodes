@@ -3,6 +3,7 @@ all:
     secure_nodes_prefix: sec
     super_nodes_prefix: sup
     ipv6_subnet: "2a45:c456:4493:5534:c:c:c:"
+    private_ipv4_subnet: "10.0.3.0/24"   # Subnet for the LXC bridge 
     ssh_public_key: ssh-rsa AAAAB3Nz..K7n8DX5dBeEQlEBN6fcVN your_user@ansible_controler
     blocks_directory: /root/chain
     global_tracker_region: eu
