@@ -10,3 +10,4 @@ docs/private.md
 docs/*
 docs/inventory-private.yml
 inventory.yml
+rsync.env
