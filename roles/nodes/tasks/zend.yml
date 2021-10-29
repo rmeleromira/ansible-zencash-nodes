@@ -36,6 +36,36 @@
     dest: /home/zend/.zen/zen.conf
   register: zen_conf
 
+- name: Set perms on blockchain blocks
+  file:
+    dest=/home/zend/.zen/blocks
+    owner=zend
+    group=zend
+    mode=u=rwX,g=rX,o=r
+    recurse=yes
+
+- name: Set perms on blockchain chainstate
+  file:
+    dest=/home/zend/.zen/chainstate
+    owner=zend
+    group=zend
+    mode=u=rwX,g=rX,o=r
+    recurse=yes
+
+- name: Set perms on zen.conf
+  file:
+    dest=/home/zend/.zen/zen.conf
+    owner=zend
+    group=zend
+    mode=u=rwX,g=rX,o=
+
+- name: Set perms on zen password
+  file:
+    dest=/home/zend/.zen/.password
+    owner=zend
+    group=zend
+    mode=u=rwX,g=rX,o=
+
 - name: Start and enable zend
   systemd:
     daemon_reload: yes
