@@ -5,7 +5,7 @@
 This repo provides ansible roles that will configure a VPS or bare metal machine to host lxc containers that will each run an instance of the zend daemon and the secure node tracker client.
 
 This was originally written for and tested against Ubuntu Xenial 16.04 and the [Contabo VPS instances](https://contabo.com/?show=vps), but has 
-recently been updated to support Debian 11 "Bullseye" and tested on [Proxmox](https://pve.proxmox.com/)
+recently been updated to support Debian 11 "Bullseye" and tested on [Proxmox](https://pve.proxmox.com/).
 
 # Requirements
 * [Securenodes](https://securenodes2.na.zensystem.io/about)
@@ -23,7 +23,7 @@ This is a non-standard installation of zend and the nodetracker client. Don't as
 # Security
 Since the crypto space is full of scammers and hackers, security on your nodes is absolutely necessary. I've tried to make this playbook as secure as possible. If you see any possible improvements, open an issue or message on @techistheway in the Zencash Discord.
 1. Uses LXC to separate the namespace
-2. LXC containers are unpriviledged (WIP)
+2. ~~LXC containers are unpriviledged (WIP)~~
 3. SSH is disabled to save ram. Consoles are possible with lxc-attach, or you can restart ssh using the utility playbooks.
 4. ~~[ansible-hardening](https://github.com/openstack/ansible-hardening) role applies all applicable [STIGs](https://iase.disa.mil/stigs/Pages/index.aspx)~~
 5. UFW firewall is configured to block everything except the ssh port and the zend port
@@ -67,8 +67,8 @@ cd ansible-zencash-nodes/
 `./install_host_deps.sh`
 ## Generate an SSH key to use for authenticating to the ansible controller
 ```
-ssh-keygen -t id25519
-cat ~/.ssh/id25519.pub >> ~/.ssh/authorized_keys
+ssh-keygen -t ed25519
+cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
 chmod 640 ~/.ssh/authorized_keys
 ```
 ## Edit inventory.yml
