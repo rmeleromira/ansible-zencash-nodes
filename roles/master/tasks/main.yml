@@ -1,10 +1,12 @@
 ---
-- include_tasks: swap.yml
-  tags: swap
+#- include_tasks: swap.yml     ## swap contraindicated on ZFS but enable if you need it
+#  tags: swap
 - include_tasks: setup.yml
   tags: setup
 - include_tasks: ufw.yml
   tags: ufw
+- include_tasks: zcash-params.yml
+  tags: zcash-params  
 - include_tasks: lxcbr0.yml
   tags: lxcbr0
 - include_tasks: ssh.yml

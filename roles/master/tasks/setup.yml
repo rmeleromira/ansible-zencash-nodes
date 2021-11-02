@@ -1,7 +1,7 @@
 ---
-- name: Set hostname to {{global_domain}}
+- name: Set hostname to zen-controller.{{global_domain}}
   hostname:
-    name: "{{global_domain}}"
+    name: "zen-controller.{{global_domain}}"
 
 - name: Add nodes-command and bash-completion
   blockinfile:
@@ -31,6 +31,7 @@
   - { name: net.ipv6.conf.all.forwarding, value: 1 }
   - { name: net.ipv6.conf.default.forwarding, value: 1 }
   - { name: net.ipv6.conf.default.proxy_ndp, value: 1 }
+  - { name: "net.ipv6.conf.{{ipv6_interface}}.accept_ra", value: 2 }
   - { name: fs.inotify.max_queued_events, value: 1048576 }
   - { name: fs.inotify.max_user_instances, value: 1048576 }
   - { name: fs.inotify.max_user_watches, value: 1048576 }
@@ -40,15 +41,9 @@
 
 - name: Download prerequisites
   apt:
-    name: lxc,python-lxc,ufw,fail2ban,libpam-cgroup,libpam-cgfs,bridge-utils,acl,bash-completion
+    name: lxc,python3-lxc,ufw,libpam-cgroup,libpam-cgfs,bridge-utils,acl,bash-completion
     state: present
     update_cache: yes
-
-- name: Start and enable fail2ban
-  systemd:
-    name: fail2ban
-    state: started
-    enabled: yes
 
 - name: Start and enable apparmor
   systemd:

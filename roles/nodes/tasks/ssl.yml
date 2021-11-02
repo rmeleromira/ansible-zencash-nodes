@@ -25,52 +25,73 @@
   args:
     chdir: /home/zend/acme.sh  
   when: acmesh.changed
-  # must re-install acme.sh if we checkout a new release
-  # resolves a breaking problem related to a hanging issued fixed in
-  # https://github.com/acmesh-official/acme.sh/releases/tag/2.8.3
+
+- name: Configure acme.sh account
+  template:
+    src: account.conf
+    dest: "/home/zend/.acme.sh/account.conf"
+    owner: zend
+    group: zend
+  register: acme_sh_account_configured
 
 - name: Allow acme.sh sudo
   lineinfile:
     path: "/etc/sudoers"
-    line: 'zend ALL=(ALL) NOPASSWD: /home/zend/.acme.sh/acme.sh,/bin/systemctl restart zend'
+    line: 'zend ALL=(ALL) NOPASSWD: /home/zend/.acme.sh/acme.sh,/bin/systemctl restart zend,/home/zend/.acme.sh/renew_hook.sh'
 
 - name: Check for certificate
   stat:
-    path: "/home/zend/.acme.sh/{{ansible_fqdn}}/{{ansible_fqdn}}.cer"
+    path: "/home/zend/.acme.sh/{{container_fqdn}}/{{container_fqdn}}.cer"
   register: certificate_exists
 
 - name: Get SSL certificate
   become_user: zend
-  shell: "sudo /home/zend/.acme.sh/acme.sh --issue --standalone -d {{ansible_fqdn}} --listen-v6 --renew-hook 'sudo /bin/systemctl restart zend'"
+  ### staging CA [use for testing to avoid rate limits]
+  #shell: "/home/zend/.acme.sh/acme.sh --issue --staging --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  # remove --staging for prod use
+  ###
+  ### 
+  ### letsencrypt CA (best, use this one)
+  shell: "/home/zend/.acme.sh/acme.sh --server letsencrypt --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  ###
+  ### zerossl CA (acme default, works but is flaky)
+  #shell: "/home/zend/.acme.sh/acme.sh --issue --dns dns_aws -d {{ container_fqdn }} --renew-hook 'sudo /home/zend/.acme.sh/renew_hook.sh'"
+  ###
   when: certificate_exists.stat.exists == False
+
+- name: Parse intermediate cert from fullchain
+  shell: cat /home/zend/.acme.sh/{{container_fqdn}}/fullchain.cer | awk 'split_after==1{n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1} {print > "/usr/local/share/ca-certificates/le-intermediate-cert" n ".crt"}'
+  register: intermediate_cert_parsed
 
 - name: Copy ca.crt
   copy:
-    src: /home/zend/.acme.sh/{{ansible_fqdn}}/ca.cer
-    dest: /usr/local/share/ca-certificates/ca.crt
+    src: /home/zend/.acme.sh/{{container_fqdn}}/ca.cer
+    dest: /usr/local/share/ca-certificates/acme_ca.cer
     remote_src: yes
   register: ca_cert
 
-# support new LE intermediates as of sept 2020
-# https://letsencrypt.org/2020/09/17/new-root-and-intermediates.html
-- name: Copy fullchain.crt
-  copy:
-    src: /home/zend/.acme.sh/{{ansible_fqdn}}/fullchain.cer
-    dest: /usr/local/share/ca-certificates/fullchain.crt
-    remote_src: yes
-  register: fullchain_cert
-
 - name: Update ca-certificates
   shell: "update-ca-certificates --fresh"
-  when: ca_cert.changed or fullchain_cert.changed
+  when: ca_cert.changed or intermediate_cert_parsed.rc == 0
 
-- name: Remove acme crontab that's missing sudo
+- name: Remove default acme crontab that does not handle zend restart
   lineinfile:
     path: /var/spool/cron/crontabs/zend
     regexp: \* \"
     state: absent
 
-- name: Add sudo to crontab for acme
+
+- name: Create renew_hook.sh from template
+  template:
+    src: renew_hook.sh
+    dest: "/home/zend/.acme.sh/renew_hook.sh"
+    owner: root
+    group: root
+    mode: 0750
+  
+- name: Add cert renewal to crontab for zend user
   lineinfile:
     path: /var/spool/cron/crontabs/zend
-    line: '{{ 60 | random(seed=ansible_fqdn) }} 0 * * * sudo "/home/zend/.acme.sh"/acme.sh --cron --home "/home/zend/.acme.sh" > /dev/null'
+    line: '{{ 60 | random(seed=container_fqdn) }} 0 * * * /home/zend/.acme.sh/acme.sh --cron --home /home/zend/.acme.sh --renew-hook "sudo /home/zend/.acme.sh/renew_hook.sh"'
+    # note that the renew-hook seems to be persisted somewhere in acme (and the hook from the -issue command is used despite what we specify here)
+

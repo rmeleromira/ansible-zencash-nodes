@@ -1,4 +1,21 @@
 ---
+#- name: "Ansible | List all known variables and facts"
+#  debug:
+#    var: hostvars[inventory_hostname]
+- name: "Ansible | Print ansible_fqdn"
+  debug:
+    msg: "The defined ansible_fqdn is {{ ansible_fqdn }}"
+  when: ansible_fqdn is defined
+- name: "Ansible | Print container_hostname"
+  debug:
+    msg: "The defined container_hostname is {{ container_hostname }}"
+  when: container_hostname is defined  
+- name: "What is my inventory_hostname"
+  debug: 
+    msg: "inventory_hostname: {{ inventory_hostname }}"
+- name: "What is my ansible_hostname"
+  debug: 
+    msg: "ansible_hostname: {{ ansible_hostname }}"
 - include_tasks: gather-vars.yml
   tags: gather-vars
 - include_tasks: ssh.yml

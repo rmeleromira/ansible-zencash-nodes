@@ -6,7 +6,7 @@
 
 - name: Add zend repository
   apt_repository:
-    repo: deb https://HorizenOfficial.github.io/repo/ xenial main
+    repo: deb https://HorizenOfficial.github.io/repo/ focal main
     state: present
 
 - name: Install zend package
@@ -14,26 +14,16 @@
     name: zen
     state: latest
 
-- name: Check for params folder
-  stat:
-    path: /home/zend/.zcash-params
-  register: params_exists
-
-- name: zen-fetch-params
-  shell: zen-fetch-params
-  become_user: zend
-  when: params_exists.stat.exists == False
+- name: symlink zcash params in from bind mount
+  file:
+    src: "/mnt"
+    dest: "/home/zend/.zcash-params"
+    state: link
 
 - name: Check for zen.conf
   stat:
     path: /home/zend/.zen/zen.conf
   register: zenconf_exists
-
-- name: Initial zend run
-  shell: zend
-  become_user: zend
-  when: zenconf_exists.stat.exists == False
-  ignore_errors: true
 
 - name: Copy zend service script
   copy:
@@ -45,6 +35,36 @@
     src: zen.conf
     dest: /home/zend/.zen/zen.conf
   register: zen_conf
+
+- name: Set perms on blockchain blocks
+  file:
+    dest=/home/zend/.zen/blocks
+    owner=zend
+    group=zend
+    mode=u=rwX,g=rX,o=r
+    recurse=yes
+
+- name: Set perms on blockchain chainstate
+  file:
+    dest=/home/zend/.zen/chainstate
+    owner=zend
+    group=zend
+    mode=u=rwX,g=rX,o=r
+    recurse=yes
+
+- name: Set perms on zen.conf
+  file:
+    dest=/home/zend/.zen/zen.conf
+    owner=zend
+    group=zend
+    mode=u=rwX,g=rX,o=
+
+- name: Set perms on zen password
+  file:
+    dest=/home/zend/.zen/.password
+    owner=zend
+    group=zend
+    mode=u=rwX,g=rX,o=
 
 - name: Start and enable zend
   systemd:

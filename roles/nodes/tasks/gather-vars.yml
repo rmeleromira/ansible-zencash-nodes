@@ -6,7 +6,7 @@
   register: config_file
 
 - name: Gather nodeid
-  shell: cat /home/zend/nodetracker/config/config.json | python -c 'import json,sys; data=json.load(sys.stdin); print data["{{node_type}}"]["nodeid"]'
+  shell: cat /home/zend/nodetracker/config/config.json | jq -r '."{{node_type}}".nodeid'
   register: nodeid_from_config
   when: config_file.stat.exists == True
 
@@ -22,7 +22,7 @@
 
 # home
 - name: Gather home
-  shell: cat /home/zend/nodetracker/config/config.json | python -c 'import json,sys; data=json.load(sys.stdin); print data["{{node_type}}"]["home"]'
+  shell: cat /home/zend/nodetracker/config/config.json | jq -r '."{{node_type}}".home'
   register: home_from_config
   when: config_file.stat.exists == True
 
@@ -33,8 +33,13 @@
 
 - name: Set home
   set_fact:
-    home: "{{tracker_prefix}}{{ ['1','2','3','4'] | random(seed=ansible_fqdn) }}.{{tracker_region}}"
+    home: "{{tracker_prefix}}{{ ['1','2','3','4'] | random(seed=container_fqdn) }}.{{tracker_region}}"
   when: config_file.stat.exists == False
+
+#- name: "Ansible | Print home"
+#  debug:
+#    msg: "The defined home is {{ home }}"
+#  when: home is defined  
 
 # username
 - name: Check for previously generated username

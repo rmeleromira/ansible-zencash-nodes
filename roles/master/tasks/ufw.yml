@@ -14,7 +14,7 @@
       {% for supernode in groups['supernodes'] %}
       -A PREROUTING -i {{ipv6_interface}} -d {{hostvars[supernode].public_ipv4_address}} -p tcp --dport 9033 -j DNAT --to-destination {{hostvars[supernode].private_ipv4_address}}:9033
       {% endfor %}
-      -A POSTROUTING -s 10.0.3.0/24 ! -d 10.0.3.0/24 -j MASQUERADE
+      -A POSTROUTING -s {{private_ipv4_subnet}} ! -d {{private_ipv4_subnet}} -j MASQUERADE
       COMMIT
   register: ufw_forward_added
   when: groups['supernodes'] is defined

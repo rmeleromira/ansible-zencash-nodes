@@ -1,2 +1,13 @@
 *.retry
 *.code-workspace
+
+*._.DS_Store
+*.DS_Store
+
+roles/nodes/._.DS_Store
+
+docs/private.md
+docs/*
+docs/inventory-private.yml
+inventory.yml
+rsync.env
