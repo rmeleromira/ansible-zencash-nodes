@@ -5,7 +5,7 @@
 This repo provides ansible roles that will configure a VPS or bare metal machine to host lxc containers that will each run an instance of the zend daemon and the secure node tracker client.
 
 This was originally written for and tested against Ubuntu Xenial 16.04 and the [Contabo VPS instances](https://contabo.com/?show=vps), but has 
-recently been updated to support Debian 11 "Bullseye" and tested on [Proxmox](https://pve.proxmox.com/).
+recently been updated to support Debian 11 "Bullseye" and tested on [Proxmox](https://pve.proxmox.com/).  Users report that Contabo still works, but that you must disable `- { name: "net.ipv6.conf.{{ipv6_interface}}.accept_ra", value: 2 }` in roles/master/tasks/setup.yml.
 
 # Requirements
 * [Securenodes](https://securenodes2.na.zensystem.io/about)
@@ -13,7 +13,7 @@ recently been updated to support Debian 11 "Bullseye" and tested on [Proxmox](ht
 
 Note that Supernodes must be publicly reachable via both IPv4 and IPv6.  Securenodes must be reachable via either IPv4 or IPv6.
 
-All nodes must have a valid public SSL certificate.  These playbooks leverage [acme.sh](https://github.com/acmesh-official/acme.sh) to request free public TLS certificates.  Note that rather than expose TCP/80 to the Internet for TLS issuance, we are now leveraging the DNS API, and AWS Route53 is the first provider implemented.
+All nodes must have a valid public SSL certificate.  These playbooks leverage [acme.sh](https://github.com/acmesh-official/acme.sh) to request free public TLS certificates.  Note that rather than expose TCP/80 to the Internet for TLS issuance, we are now leveraging the DNS API, and AWS Route53 is the first provider implemented.  PR's appreciated for generalizing support of the ACME DNS API for various DNS providers.
 
 Note also that any upstream firewalls / security groups will need to permit TCP/9033 to the nodes.
 

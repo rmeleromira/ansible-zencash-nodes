@@ -5,10 +5,16 @@
     block: |
       module(load="imtcp")
       input(type="imtcp" port="514")
-  register: rsyslog_added
+  register: remote_rsyslog_added
+
+- name: Suppress joinsplit messages from zend
+  copy:
+    src: rsyslog_zend.conf
+    dest: /etc/rsyslog.d/rsyslog_zend.conf
+  register: suppress_zend_rsyslog
 
 - name: Restart rsyslog
   systemd:
     name: rsyslog
     state: restarted
-  when: rsyslog_added.changed
+  when: remote_rsyslog_added.changed or suppress.zend.rsyslog.changed

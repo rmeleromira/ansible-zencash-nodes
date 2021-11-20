@@ -10,6 +10,11 @@ all:
     global_tracker_email: your_email@gmail.com
     global_domain: your-nodes-address.com
     swap_size_gb: 60
+    ###################################################################
+    # caution: do not push these into public repos!
+    aws_access_key: "YOUR_AWS_ACCESS_KEY"
+    aws_secret_access_key: "YOUR_AWS_SECRET_ACCESS_KEY"
+    ###################################################################
   children:
     master:
       vars:
@@ -31,6 +36,7 @@ all:
       hosts:
         supnode01:
           ansible_fqdn: "{{super_nodes_prefix}}01.{{global_domain}}"
+          container_fqdn: "{{super_nodes_prefix}}01.{{global_domain}}"
           ansible_host: "{{ipv6_subnet}}11"
           announce_ipv4_address: 1.2.3.4       # public IPv4 to announce to the p2p network, should be publicly routable
           public_ipv4_address: 192.168.0.1     # IPv4 for the "public" interface, may be RFC1918 or actually public
@@ -40,6 +46,7 @@ all:
           category: "{{super_category}}"
         # supnode02:
         #  ansible_fqdn: "{{super_nodes_prefix}}02.{{global_domain}}"
+        #  container_fqdn: "{{super_nodes_prefix}}02.{{global_domain}}"
         #  ansible_host: "{{ipv6_subnet}}12"
         #  public_ipv4_address:
         #  private_ipv4_address: 10.0.3.202
@@ -48,6 +55,7 @@ all:
         #  category: "{{super_category}}"
         # supnode03:
         #  ansible_fqdn: "{{super_nodes_prefix}}03.{{global_domain}}"
+        #  container_fqdn: "{{super_nodes_prefix}}03.{{global_domain}}"
         #  ansible_host: "{{ipv6_subnet}}13"
         #  public_ipv4_address:
         #  private_ipv4_address: 10.0.3.203
@@ -65,73 +73,22 @@ all:
       hosts:
         secnode01:
           ansible_fqdn: "{{secure_nodes_prefix}}01.{{global_domain}}"
+          container_fqdn: "{{secure_nodes_prefix}}01.{{global_domain}}"
           ansible_host: "{{ipv6_subnet}}21"
           stake_address:
           tracker_email: "{{global_tracker_email}}"
           category: "{{secure_category}}"
         # secnode02:
         #   ansible_fqdn: "{{secure_nodes_prefix}}02.{{global_domain}}"
+        #   container_fqdn: "{{secure_nodes_prefix}}02.{{global_domain}}"
         #   ansible_host: "{{ipv6_subnet}}22"
         #   stake_address:
         #   tracker_email: "{{global_tracker_email}}"
         #   category: "{{secure_category}}"
         # secnode03:
         #   ansible_fqdn: "{{secure_nodes_prefix}}03.{{global_domain}}"
+        #   container_fqdn: "{{secure_nodes_prefix}}03.{{global_domain}}"
         #   ansible_host: "{{ipv6_subnet}}23"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode04:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}04.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}24"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode05:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}05.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}25"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode06:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}06.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}26"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode07:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}07.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}27"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode08:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}08.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}28"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode09:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}09.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}29"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode10:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}10.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}30"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode11:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}11.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}31"
-        #   stake_address:
-        #   tracker_email: "{{global_tracker_email}}"
-        #   category: "{{secure_category}}"
-        # secnode12:
-        #   ansible_fqdn: "{{secure_nodes_prefix}}12.{{global_domain}}"
-        #   ansible_host: "{{ipv6_subnet}}32"
         #   stake_address:
         #   tracker_email: "{{global_tracker_email}}"
         #   category: "{{secure_category}}"
