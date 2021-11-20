@@ -17,4 +17,4 @@
   systemd:
     name: rsyslog
     state: restarted
-  when: remote_rsyslog_added.changed or suppress.zend.rsyslog.changed
+  when: remote_rsyslog_added.changed or suppress_zend_rsyslog.changed
